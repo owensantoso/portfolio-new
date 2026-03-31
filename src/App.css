@@ -24,6 +24,32 @@
   font-size: 1.05rem;
 }
 
+.search-row {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 28px;
+}
+
+.search-label {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.95rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  outline: none;
+}
+
+.search-input:focus {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 4px rgba(36, 49, 38, 0.06);
+}
+
 .profile-link {
   width: fit-content;
   display: inline-flex;
@@ -92,14 +118,28 @@
   border-radius: 24px;
   overflow: clip;
   box-shadow: 0 18px 45px rgba(16, 24, 19, 0.06);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+
+.project-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-strong);
+  box-shadow: 0 26px 54px rgba(16, 24, 19, 0.12);
 }
 
 .project-image-link {
   display: block;
+  width: 100%;
+  border: 0;
+  padding: 0;
   aspect-ratio: 16 / 10;
   background:
     linear-gradient(180deg, rgba(246, 248, 244, 0.6), rgba(231, 236, 230, 0.95)),
     linear-gradient(135deg, rgba(205, 220, 208, 0.8), rgba(249, 250, 247, 0.8));
+  cursor: zoom-in;
 }
 
 .project-image {
@@ -113,6 +153,7 @@
   display: grid;
   gap: 18px;
   padding: 22px;
+  height: 100%;
 }
 
 .project-heading {
@@ -154,6 +195,7 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-top: auto;
+  padding-top: 8px;
 }
 
 .project-links a {
@@ -165,6 +207,43 @@
 
 .project-links a:hover {
   border-color: currentColor;
+}
+
+.empty-state {
+  margin: 28px 0 0;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgba(18, 24, 19, 0.82);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  cursor: pointer;
+}
+
+.lightbox-image {
+  max-width: min(1100px, 100%);
+  max-height: calc(100vh - 80px);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 
 @media (max-width: 720px) {

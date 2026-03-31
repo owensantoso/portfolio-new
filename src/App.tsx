@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import type { ProjectCardData } from './lib/github'
 import { resolveProject } from './lib/github'
@@ -8,6 +8,11 @@ function App() {
   const [projectCards, setProjectCards] = useState<ProjectCardData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedImage, setSelectedImage] = useState<{
+    src: string
+    title: string
+  } | null>(null)
 
   useEffect(() => {
     let isCancelled = false
@@ -61,11 +66,46 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setSelectedImage(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
+  const filteredProjects = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase()
+
+    if (!normalizedQuery) {
+      return projectCards
+    }
+
+    return projectCards.filter((project) => {
+      const haystack = [
+        project.title,
+        project.description,
+        project.repo,
+        ...project.tags,
+      ]
+        .join(' ')
+        .toLowerCase()
+
+      return haystack.includes(normalizedQuery)
+    })
+  }, [projectCards, searchQuery])
+
   return (
     <main className="page-shell">
       <section className="hero">
         <p className="eyebrow">Selected work</p>
-        <h1>Recent projects, collected in one quiet place.</h1>
+        <h1>Owen Santoso</h1>
         <p className="hero-copy">
           A small portfolio index for live apps, experiments, and tools. Each card links
           out to the project itself and the GitHub repo behind it.
@@ -82,28 +122,42 @@ function App() {
 
       <section className="content-header" aria-label="Project status">
         <div>
-          <h2>Current projects</h2>
+          <h2>Projects</h2>
           <p>Curated manually, then enriched from GitHub when metadata is available.</p>
         </div>
         <div className="status-chip" aria-live="polite">
-          {isLoading ? 'Loading GitHub data...' : `${projectCards.length} projects`}
+          {isLoading ? 'Loading GitHub data...' : `${filteredProjects.length} projects`}
         </div>
       </section>
 
       {error ? <p className="notice">{error}</p> : null}
 
+      <div className="search-row">
+        <label className="search-label" htmlFor="project-search">
+          Search projects
+        </label>
+        <input
+          id="project-search"
+          className="search-input"
+          type="search"
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          placeholder="Search by title, tag, repo, or description"
+        />
+      </div>
+
       <section className="project-grid" aria-label="Project list">
-        {projectCards.map((project) => (
+        {filteredProjects.map((project) => (
           <article className="project-card" key={project.slug}>
             {project.imageUrl ? (
-              <a
+              <button
+                type="button"
                 className="project-image-link"
-                href={project.liveUrl ?? project.githubUrl}
-                target="_blank"
-                rel="noreferrer"
+                onClick={() => setSelectedImage({ src: project.imageUrl!, title: project.title })}
+                aria-label={`Enlarge image for ${project.title}`}
               >
                 <img className="project-image" src={project.imageUrl} alt="" loading="lazy" />
-              </a>
+              </button>
             ) : null}
 
             <div className="project-body">
@@ -134,6 +188,35 @@ function App() {
           </article>
         ))}
       </section>
+
+      {!isLoading && filteredProjects.length === 0 ? (
+        <p className="empty-state">No projects match that search yet.</p>
+      ) : null}
+
+      {selectedImage ? (
+        <div
+          className="lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={selectedImage.title}
+          onClick={() => setSelectedImage(null)}
+        >
+          <button
+            type="button"
+            className="lightbox-close"
+            onClick={() => setSelectedImage(null)}
+            aria-label="Close enlarged image"
+          >
+            Close
+          </button>
+          <img
+            className="lightbox-image"
+            src={selectedImage.src}
+            alt=""
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      ) : null}
     </main>
   )
 }

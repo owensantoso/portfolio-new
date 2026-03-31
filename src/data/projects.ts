@@ -43,4 +43,10 @@ export const projects: ProjectConfig[] = [
     tags: ['Wearables', 'Spotify'],
     sortOrder: 6,
   },
+  {
+    slug: 'big2-helper',
+    repo: 'owensantoso/big2-helper',
+    tags: ['Card game', 'Utility'],
+    sortOrder: 7,
+  },
 ]
