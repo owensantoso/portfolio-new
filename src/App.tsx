@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
-import type { ProjectCardData } from './lib/github'
-import { resolveProject } from './lib/github'
-import { projects } from './data/projects'
+import type { ProjectCache, ProjectCardData } from './lib/projects'
 
 function App() {
   const [projectCards, setProjectCards] = useState<ProjectCardData[]>([])
@@ -20,43 +18,45 @@ function App() {
     async function loadProjects() {
       setIsLoading(true)
       setError(null)
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}data/projects-cache.json`, {
+          cache: 'no-cache',
+        })
 
-      const results = await Promise.all(
-        projects.map((project) =>
-          resolveProject(project).catch(() => ({
-            slug: project.slug,
-            repo: project.repo,
-            title: project.title ?? project.repo.split('/')[1],
-            description: project.description ?? 'Project details unavailable.',
-            imageUrl: project.imageUrl ?? null,
-            liveUrl: project.liveUrl ?? null,
-            githubUrl: project.githubUrl ?? `https://github.com/${project.repo}`,
-            tags: project.tags ?? [],
-            sortOrder: project.sortOrder ?? 999,
-            sourceStatus: 'error' as const,
-          })),
-        ),
-      )
+        if (!response.ok) {
+          throw new Error('Project cache request failed')
+        }
 
-      if (isCancelled) {
-        return
-      }
+        const payload = (await response.json()) as ProjectCache
 
-      setProjectCards(
-        results.sort((left, right) => {
+        if (isCancelled) {
+          return
+        }
+
+        const sortedProjects = payload.projects.sort((left, right) => {
           if (left.sortOrder !== right.sortOrder) {
             return left.sortOrder - right.sortOrder
           }
 
           return left.title.localeCompare(right.title)
-        }),
-      )
+        })
 
-      if (results.some((project) => project.sourceStatus === 'error')) {
-        setError('Some GitHub details could not be loaded, so a few cards are using local fallback content.')
+        setProjectCards(sortedProjects)
+
+        if (sortedProjects.some((project) => project.sourceStatus === 'error')) {
+          setError('Some cached project details could not be refreshed from GitHub during the last update.')
+        }
+      } catch {
+        if (isCancelled) {
+          return
+        }
+
+        setError('Project data is temporarily unavailable.')
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false)
+        }
       }
-
-      setIsLoading(false)
     }
 
     void loadProjects()
@@ -123,10 +123,10 @@ function App() {
       <section className="content-header" aria-label="Project status">
         <div>
           <h2>Projects</h2>
-          <p>Curated manually, then enriched from GitHub when metadata is available.</p>
+          <p>Curated manually, then refreshed from GitHub on a scheduled cache update.</p>
         </div>
         <div className="status-chip" aria-live="polite">
-          {isLoading ? 'Loading GitHub data...' : `${filteredProjects.length} projects`}
+          {isLoading ? 'Loading project data...' : `${filteredProjects.length} projects`}
         </div>
       </section>
 

@@ -17,7 +17,9 @@ npm run build
 
 ## Content
 
-Edit the curated project list in `src/data/projects.ts`. Each entry can provide local overrides for title, description, live URL, tags, and image URL. The site then enriches each card from GitHub in the browser and will try to use the first useful README image when no manual screenshot is supplied.
+Edit the curated project list in `src/data/project-config.json`. Each entry can provide local overrides for title, description, live URL, tags, and image URL.
+
+Project metadata is generated into `public/data/projects-cache.json` by `npm run generate:projects`. The site reads that static cache at runtime, and the deploy workflow also refreshes it on each push plus once a day on a schedule.
 
 ## Deployment
 

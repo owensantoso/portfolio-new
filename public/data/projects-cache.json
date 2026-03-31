@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-03-31T22:05:16.624Z",
+  "projects": [
+    {
+      "slug": "grocery-price-map",
+      "repo": "owensantoso/grocery-price-map",
+      "title": "Grocery Price Map",
+      "description": "A Next.js + Supabase app for logging grocery prices at exact store locations, preserving full history, and comparing the latest normalized price by item.",
+      "imageUrl": "https://github.com/user-attachments/assets/47774ee3-98b0-443d-bc5b-1d886e4d4fef",
+      "liveUrl": "https://grocery-price-map.vercel.app",
+      "githubUrl": "https://github.com/owensantoso/grocery-price-map",
+      "tags": [
+        "Next.js",
+        "Supabase",
+        "Maps"
+      ],
+      "sortOrder": 1,
+      "sourceStatus": "ok"
+    },
+    {
+      "slug": "spotify-playlist-tracker",
+      "repo": "owensantoso/spotify-playlist-tracker",
+      "title": "Spotify Playlist Tracker",
+      "description": "A small full-stack app for watching one collaborative Spotify playlist over time.",
+      "imageUrl": "https://github.com/user-attachments/assets/92ac9010-ccee-43a9-8b67-5022140d5f3f",
+      "liveUrl": "https://spotify-playlist-tracker.vercel.app",
+      "githubUrl": "https://github.com/owensantoso/spotify-playlist-tracker",
+      "tags": [
+        "Spotify",
+        "Full stack"
+      ],
+      "sortOrder": 2,
+      "sourceStatus": "ok"
+    },
+    {
+      "slug": "big-2-stats",
+      "repo": "owensantoso/big-2-stats",
+      "title": "Big 2 Stats",
+      "description": "Tiny static dashboard for tracking Owen vs Fiona Big 2 sessions from a published Google Sheets CSV.",
+      "imageUrl": "https://github.com/user-attachments/assets/8868e002-4cc4-4325-93de-f520999ec1d1",
+      "liveUrl": "https://owensantoso.github.io/big-2-stats/",
+      "githubUrl": "https://github.com/owensantoso/big-2-stats",
+      "tags": [
+        "Dashboard",
+        "Static site"
+      ],
+      "sortOrder": 3,
+      "sourceStatus": "ok"
+    },
+    {
+      "slug": "jmty-map-chrome-extension",
+      "repo": "owensantoso/jmty-map-chrome-extension",
+      "title": "Jimoty Pickup Map",
+      "description": "Chrome extension that shows pickup location on a map on Jimoty item pages.",
+      "imageUrl": "https://github.com/user-attachments/assets/eab217aa-e427-4aab-8bcf-b74a21c67b84",
+      "liveUrl": "https://chromewebstore.google.com/detail/jimoty-pickup-map/fpjalenbgdfpaghclllcilcaolphcjdo",
+      "githubUrl": "https://github.com/owensantoso/jmty-map-chrome-extension",
+      "tags": [
+        "Chrome extension",
+        "Maps"
+      ],
+      "sortOrder": 4,
+      "sourceStatus": "ok"
+    },
+    {
+      "slug": "whisper-lecture-enhancer",
+      "repo": "owensantoso/whisper-lecture-enhancer",
+      "title": "Whisper Lecture Enhancer",
+      "description": "OpenAI-Powered Video Automated Caption and Transcription",
+      "imageUrl": "https://github.com/user-attachments/assets/17ba68c7-6a1a-4c62-a09e-a495b850d4d2",
+      "liveUrl": null,
+      "githubUrl": "https://github.com/owensantoso/whisper-lecture-enhancer",
+      "tags": [
+        "OpenAI",
+        "Transcription"
+      ],
+      "sortOrder": 5,
+      "sourceStatus": "ok"
+    },
+    {
+      "slug": "ar-spotify-lyrics",
+      "repo": "owensantoso/AR-spotify-lyrics",
+      "title": "AR Spotify Lyrics",
+      "description": "A personal MentraOS app that shows Spotify lyrics on Even Realities G1 glasses, with optional Chinese/Japanese/Korean romanization and live per-user settings.",
+      "imageUrl": null,
+      "liveUrl": "",
+      "githubUrl": "https://github.com/owensantoso/AR-spotify-lyrics",
+      "tags": [
+        "Wearables",
+        "Spotify"
+      ],
+      "sortOrder": 6,
+      "sourceStatus": "ok"
+    },
+    {
+      "slug": "big2-helper",
+      "repo": "owensantoso/big2-helper",
+      "title": "Big2 Helper",
+      "description": "Mobile-friendly Big Two helper with a cheat sheet and settlement calculator",
+      "imageUrl": "https://github.com/user-attachments/assets/cf96e952-f3ae-4c02-b1ac-fb7f494a1fb6",
+      "liveUrl": "https://owensantoso.github.io/big2-helper/",
+      "githubUrl": "https://github.com/owensantoso/big2-helper",
+      "tags": [
+        "Card game",
+        "Utility"
+      ],
+      "sortOrder": 7,
+      "sourceStatus": "ok"
+    }
+  ]
+}
