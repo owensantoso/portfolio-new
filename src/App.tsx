@@ -105,7 +105,7 @@ function App() {
     <main className="page-shell">
       <section className="hero">
         <p className="eyebrow">Selected work</p>
-        <h1>Owen Santoso</h1>
+        <h1>toso</h1>
         <p className="hero-copy">
           A small portfolio index for live apps, experiments, and tools. Each card links
           out to the project itself and the GitHub repo behind it.
