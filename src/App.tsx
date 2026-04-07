@@ -1,18 +1,20 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import type { ProjectCache, ProjectCardData } from './lib/projects'
 
 const AIKO_DOWNLOAD_URL =
   'https://pub-2ebc7f4f20ce4f678a9dc932b1f9830e.r2.dev/downloads/Aiko-0.1.1-alpha-arm64.dmg'
+const AIKO_IMAGE_URL = `${import.meta.env.BASE_URL}data/aiko.png`
 
 function App() {
   const [projectCards, setProjectCards] = useState<ProjectCardData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [, setTitleClickCount] = useState(0)
+  const titleClickCountRef = useRef(0)
   const [isAikoUnlocked, setIsAikoUnlocked] = useState(false)
   const [animateAikoCard, setAnimateAikoCard] = useState(false)
+  const [flashNumber, setFlashNumber] = useState<'6' | '7' | null>(null)
   const [selectedImage, setSelectedImage] = useState<{
     src: string
     title: string
@@ -100,6 +102,26 @@ function App() {
     }
   }, [animateAikoCard])
 
+  useEffect(() => {
+    if (!flashNumber) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setFlashNumber(null)
+    }, 950)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [flashNumber])
+
+  useEffect(() => {
+    if (searchQuery.trim() === '67') {
+      setAnimateAikoCard(true)
+    }
+  }, [searchQuery])
+
   const filteredProjects = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
 
@@ -122,7 +144,9 @@ function App() {
   }, [projectCards, searchQuery])
 
   const normalizedQuery = searchQuery.trim().toLowerCase()
+  const showSixPrompt = normalizedQuery === '6'
   const showAikoFromSearch = normalizedQuery === '67'
+  const showOnlyAiko = isAikoUnlocked && !showAikoFromSearch
   const showAikoCard =
     showAikoFromSearch ||
     (isAikoUnlocked &&
@@ -141,25 +165,26 @@ function App() {
               return
             }
 
-            setTitleClickCount((currentCount) => {
-              const nextCount = currentCount + 1
+            const nextCount = titleClickCountRef.current + 1
+            titleClickCountRef.current = nextCount
 
-              if (nextCount >= 7) {
-                setIsAikoUnlocked(true)
-                setAnimateAikoCard(true)
-                return 7
-              }
+            if (nextCount === 6) {
+              setFlashNumber('6')
+            }
 
-              return nextCount
-            })
+            if (nextCount >= 7) {
+              setFlashNumber('7')
+              setIsAikoUnlocked(true)
+              setAnimateAikoCard(true)
+              titleClickCountRef.current = 7
+            }
           }}
           aria-label="toso"
         >
           <h1>toso</h1>
         </button>
         <p className="hero-copy">
-          A small portfolio index for live apps, experiments, and tools. Each card links
-          out to the project itself and the GitHub repo behind it.
+          Some stuff I've made.
         </p>
         <a
           className="profile-link"
@@ -174,7 +199,7 @@ function App() {
       <section className="content-header" aria-label="Project status">
         <div>
           <h2>Projects</h2>
-          <p>Curated manually, then refreshed from GitHub on a scheduled cache update.</p>
+          <p>How many projects are there? Minus 1 is...</p>
         </div>
         <div className="status-chip" aria-live="polite">
           {isLoading ? 'Loading project data...' : `${filteredProjects.length} projects`}
@@ -183,10 +208,15 @@ function App() {
 
       {error ? <p className="notice">{error}</p> : null}
 
+      {flashNumber ? (
+        <div className="number-flash" aria-hidden="true">
+          <span key={flashNumber} className="number-flash-value">
+            {flashNumber}
+          </span>
+        </div>
+      ) : null}
+
       <div className="search-row">
-        <label className="search-label" htmlFor="project-search">
-          Search projects
-        </label>
         <input
           id="project-search"
           className="search-input"
@@ -197,53 +227,86 @@ function App() {
         />
       </div>
 
-      <section className="project-grid" aria-label="Project list">
-        {filteredProjects.map((project) => (
-          <article className="project-card" key={project.slug}>
-            {project.imageUrl ? (
-              <button
-                type="button"
-                className="project-image-link"
-                onClick={() => setSelectedImage({ src: project.imageUrl!, title: project.title })}
-                aria-label={`Enlarge image for ${project.title}`}
+      {showSixPrompt ? (
+        <div className="search-omen" aria-live="polite">
+          <span className="search-omen-copy">what comes after 6..?</span>
+        </div>
+      ) : null}
+
+      <section
+        className={`project-grid${showAikoCard ? ' project-grid-reveal' : ''}${showOnlyAiko ? ' project-grid-solo' : ''}`}
+        aria-label="Project list"
+      >
+        {!showOnlyAiko
+          ? filteredProjects.map((project) => (
+              <article
+                className={`project-card${showAikoFromSearch ? ' project-card-fading' : ''}`}
+                key={project.slug}
               >
-                <img className="project-image" src={project.imageUrl} alt="" loading="lazy" />
-              </button>
-            ) : null}
-
-            <div className="project-body">
-              <div className="project-heading">
-                <h3>{project.title}</h3>
-                {project.tags.length > 0 ? (
-                  <ul className="tag-list" aria-label={`${project.title} tags`}>
-                    {project.tags.map((tag) => (
-                      <li key={tag}>{tag}</li>
-                    ))}
-                  </ul>
+                {project.imageUrl ? (
+                  <button
+                    type="button"
+                    className="project-image-link"
+                    onClick={() => setSelectedImage({ src: project.imageUrl!, title: project.title })}
+                    aria-label={`Enlarge image for ${project.title}`}
+                  >
+                    <img className="project-image" src={project.imageUrl} alt="" loading="lazy" />
+                  </button>
                 ) : null}
-              </div>
 
-              <p className="project-description">{project.description}</p>
+                <div className="project-body">
+                  <div className="project-heading">
+                    <h3>{project.title}</h3>
+                    {project.tags.length > 0 ? (
+                      <ul className="tag-list" aria-label={`${project.title} tags`}>
+                        {project.tags.map((tag) => (
+                          <li key={tag}>{tag}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </div>
 
-              <div className="project-links">
-                {project.liveUrl ? (
-                  <a href={project.liveUrl} target="_blank" rel="noreferrer">
-                    Open project
-                  </a>
-                ) : null}
-                <a href={project.githubUrl} target="_blank" rel="noreferrer">
-                  GitHub
-                </a>
-              </div>
-            </div>
-          </article>
-        ))}
+                  <p className="project-description">{project.description}</p>
+
+                  <div className="project-links">
+                    {project.liveUrl ? (
+                      <a href={project.liveUrl} target="_blank" rel="noreferrer">
+                        Open website
+                      </a>
+                    ) : null}
+                    <a href={project.githubUrl} target="_blank" rel="noreferrer">
+                      GitHub
+                    </a>
+                  </div>
+                </div>
+              </article>
+            ))
+          : null}
 
         {showAikoCard ? (
           <article
-            className={`project-card easter-egg-card${animateAikoCard ? ' is-revealed' : ''}`}
+            className={`project-card easter-egg-card${animateAikoCard ? ' is-revealed' : ''}${showOnlyAiko ? ' easter-egg-card-solo' : ''}`}
             key="aiko-dictionary-alpha-release"
           >
+            <button
+              type="button"
+              className="project-image-link"
+              onClick={() =>
+                setSelectedImage({
+                  src: AIKO_IMAGE_URL,
+                  title: 'Aiko Dictionary Alpha Release',
+                })
+              }
+              aria-label="Enlarge image for Aiko Dictionary Alpha Release"
+            >
+              <img
+                className="project-image"
+                src={AIKO_IMAGE_URL}
+                alt=""
+                loading="lazy"
+              />
+            </button>
+
             <div className="project-body">
               <div className="project-heading">
                 <h3>Aiko Dictionary Alpha Release</h3>
@@ -271,7 +334,7 @@ function App() {
         ) : null}
       </section>
 
-      {!isLoading && filteredProjects.length === 0 && !showAikoCard ? (
+      {!isLoading && filteredProjects.length === 0 && !showAikoCard && !showOnlyAiko ? (
         <p className="empty-state">No projects match that search yet.</p>
       ) : null}
 

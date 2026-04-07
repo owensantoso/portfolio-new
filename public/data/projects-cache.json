@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T21:54:00.832Z",
+  "generatedAt": "2026-04-07T22:15:51.734Z",
   "projects": [
     {
       "slug": "grocery-price-map",
@@ -82,7 +82,7 @@
       "repo": "owensantoso/AR-spotify-lyrics",
       "title": "AR Spotify Lyrics",
       "description": "A personal MentraOS app that shows Spotify lyrics on Even Realities G1 glasses, with optional Chinese/Japanese/Korean romanization and live per-user settings.",
-      "imageUrl": null,
+      "imageUrl": "/portfolio-new/data/AR-spotify-lyrics.png",
       "liveUrl": "",
       "githubUrl": "https://github.com/owensantoso/AR-spotify-lyrics",
       "tags": [
