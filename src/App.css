@@ -24,6 +24,26 @@
   font-size: 1.05rem;
 }
 
+.title-trigger {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.title-trigger h1 {
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.title-trigger:hover h1 {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
 .search-row {
   display: grid;
   gap: 10px;
@@ -207,6 +227,35 @@
 
 .project-links a:hover {
   border-color: currentColor;
+}
+
+.download-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: rgba(36, 49, 38, 0.06);
+}
+
+.easter-egg-card {
+  border-style: dashed;
+}
+
+.easter-egg-card.is-revealed {
+  animation: easter-egg-fade-in 700ms ease both;
+}
+
+@keyframes easter-egg-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .empty-state {

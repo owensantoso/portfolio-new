@@ -2,11 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import type { ProjectCache, ProjectCardData } from './lib/projects'
 
+const AIKO_DOWNLOAD_URL =
+  'https://pub-2ebc7f4f20ce4f678a9dc932b1f9830e.r2.dev/downloads/Aiko-0.1.1-alpha-arm64.dmg'
+
 function App() {
   const [projectCards, setProjectCards] = useState<ProjectCardData[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [, setTitleClickCount] = useState(0)
+  const [isAikoUnlocked, setIsAikoUnlocked] = useState(false)
+  const [animateAikoCard, setAnimateAikoCard] = useState(false)
   const [selectedImage, setSelectedImage] = useState<{
     src: string
     title: string
@@ -80,6 +86,20 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!animateAikoCard) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setAnimateAikoCard(false)
+    }, 1400)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [animateAikoCard])
+
   const filteredProjects = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase()
 
@@ -101,11 +121,42 @@ function App() {
     })
   }, [projectCards, searchQuery])
 
+  const normalizedQuery = searchQuery.trim().toLowerCase()
+  const showAikoFromSearch = normalizedQuery === '67'
+  const showAikoCard =
+    showAikoFromSearch ||
+    (isAikoUnlocked &&
+      (normalizedQuery === '' ||
+        'aiko dictionary alpha release download'.includes(normalizedQuery)))
+
   return (
     <main className="page-shell">
       <section className="hero">
         <p className="eyebrow">Selected work</p>
-        <h1>toso</h1>
+        <button
+          type="button"
+          className="title-trigger"
+          onClick={() => {
+            if (isAikoUnlocked) {
+              return
+            }
+
+            setTitleClickCount((currentCount) => {
+              const nextCount = currentCount + 1
+
+              if (nextCount >= 7) {
+                setIsAikoUnlocked(true)
+                setAnimateAikoCard(true)
+                return 7
+              }
+
+              return nextCount
+            })
+          }}
+          aria-label="toso"
+        >
+          <h1>toso</h1>
+        </button>
         <p className="hero-copy">
           A small portfolio index for live apps, experiments, and tools. Each card links
           out to the project itself and the GitHub repo behind it.
@@ -187,9 +238,40 @@ function App() {
             </div>
           </article>
         ))}
+
+        {showAikoCard ? (
+          <article
+            className={`project-card easter-egg-card${animateAikoCard ? ' is-revealed' : ''}`}
+            key="aiko-dictionary-alpha-release"
+          >
+            <div className="project-body">
+              <div className="project-heading">
+                <h3>Aiko Dictionary Alpha Release</h3>
+                <ul className="tag-list" aria-label="Aiko Dictionary Alpha Release tags">
+                  <li>Hidden</li>
+                  <li>Alpha</li>
+                </ul>
+              </div>
+
+              <p className="project-description">
+                A tiny hidden drop for anyone who knows where to look.
+              </p>
+
+              <div className="project-links">
+                <a
+                  className="download-link"
+                  href={AIKO_DOWNLOAD_URL}
+                  download
+                >
+                  Download
+                </a>
+              </div>
+            </div>
+          </article>
+        ) : null}
       </section>
 
-      {!isLoading && filteredProjects.length === 0 ? (
+      {!isLoading && filteredProjects.length === 0 && !showAikoCard ? (
         <p className="empty-state">No projects match that search yet.</p>
       ) : null}
 
