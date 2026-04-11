@@ -7,7 +7,10 @@ const __dirname = path.dirname(__filename)
 const rootDir = path.resolve(__dirname, '..')
 const configPath = path.join(rootDir, 'src', 'data', 'project-config.json')
 const outputDir = path.join(rootDir, 'public', 'data')
+const imageOutputDir = path.join(outputDir, 'project-images')
 const outputPath = path.join(outputDir, 'projects-cache.json')
+const publicBasePath = '/portfolio-new/'
+const imageUrlBase = `${publicBasePath}data/project-images/`
 
 const repoApiBase = 'https://api.github.com/repos'
 const githubToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || ''
@@ -45,6 +48,10 @@ function buildRawBase(repo, branch) {
   return `https://raw.githubusercontent.com/${owner}/${name}/${branch}/`
 }
 
+function isRemoteUrl(url) {
+  return /^https?:\/\//i.test(url) || url.startsWith('//')
+}
+
 function isLikelyUsefulImage(url) {
   return !/badge|shield|shields\.io|badge\.svg/i.test(url)
 }
@@ -70,6 +77,61 @@ function normalizeImageUrl(candidate, repo, branch) {
   }
 
   return new URL(trimmed, buildRawBase(repo, branch)).toString()
+}
+
+function inferImageExtension(url, contentType) {
+  try {
+    const ext = path.extname(new URL(url).pathname)
+
+    if (ext) {
+      return ext
+    }
+  } catch {
+    // Ignore invalid URLs and fall back to the content type.
+  }
+
+  const normalizedContentType = (contentType ?? '').toLowerCase()
+
+  if (normalizedContentType.includes('png')) return '.png'
+  if (normalizedContentType.includes('jpeg') || normalizedContentType.includes('jpg')) return '.jpg'
+  if (normalizedContentType.includes('webp')) return '.webp'
+  if (normalizedContentType.includes('gif')) return '.gif'
+  if (normalizedContentType.includes('svg')) return '.svg'
+
+  return '.png'
+}
+
+async function downloadImageAsset(sourceUrl, slug) {
+  const response = await fetch(sourceUrl, {
+    headers: buildHeaders(),
+  })
+
+  if (!response.ok) {
+    const message = await response.text()
+    throw new Error(`Image download failed (${response.status}) for ${sourceUrl}: ${message}`)
+  }
+
+  const fileExtension = inferImageExtension(sourceUrl, response.headers.get('content-type'))
+  const fileName = `${slug}${fileExtension}`
+  const filePath = path.join(imageOutputDir, fileName)
+  const bytes = Buffer.from(await response.arrayBuffer())
+
+  await mkdir(imageOutputDir, { recursive: true })
+  await writeFile(filePath, bytes)
+
+  return `${imageUrlBase}${fileName}`
+}
+
+async function resolveImageUrl(project, candidate) {
+  if (!candidate) {
+    return null
+  }
+
+  if (!isRemoteUrl(candidate)) {
+    return candidate
+  }
+
+  return downloadImageAsset(candidate, project.slug)
 }
 
 function extractReadmeImage(readme, repo, branch) {
@@ -124,6 +186,28 @@ async function resolveProject(project) {
       readme && !project.imageUrl
         ? extractReadmeImage(readme, project.repo, payload.default_branch ?? 'main')
         : null
+    let imageUrl = null
+
+    try {
+      imageUrl = await resolveImageUrl(project, project.imageUrl ?? readmeImage)
+    } catch (imageError) {
+      return {
+        slug: project.slug,
+        repo: project.repo,
+        title: project.title ?? repoNameToTitle(project.repo),
+        description:
+          project.description ??
+          payload.description ??
+          'A recent project with details pulled from GitHub when available.',
+        imageUrl: null,
+        liveUrl: project.liveUrl ?? payload.homepage ?? null,
+        githubUrl: project.githubUrl ?? payload.html_url,
+        tags: project.tags ?? [],
+        sortOrder: project.sortOrder ?? 999,
+        sourceStatus: 'error',
+        fetchError: imageError instanceof Error ? imageError.message : String(imageError),
+      }
+    }
 
     return {
       slug: project.slug,
@@ -133,7 +217,7 @@ async function resolveProject(project) {
         project.description ??
         payload.description ??
         'A recent project with details pulled from GitHub when available.',
-      imageUrl: project.imageUrl ?? readmeImage,
+      imageUrl,
       liveUrl: project.liveUrl ?? payload.homepage ?? null,
       githubUrl: project.githubUrl ?? payload.html_url,
       tags: project.tags ?? [],
