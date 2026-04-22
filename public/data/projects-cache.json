@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-11T01:17:01.785Z",
+  "generatedAt": "2026-04-22T01:57:03.154Z",
   "projects": [
     {
       "slug": "grocery-price-map",
@@ -33,6 +33,22 @@
       "sourceStatus": "ok"
     },
     {
+      "slug": "guitar-note-visualizer",
+      "repo": "owensantoso/guitar-note-visualizer",
+      "title": "Guitar Note Visualizer",
+      "description": "Desktop-first browser tuner that listens through the microphone, detects a stable single pitch, and visualizes the note, cents offset, piano class, and optional staff.",
+      "imageUrl": null,
+      "liveUrl": "https://owensantoso.github.io/guitar-note-visualizer/",
+      "githubUrl": "https://github.com/owensantoso/guitar-note-visualizer",
+      "tags": [
+        "Music",
+        "Web audio",
+        "Visualization"
+      ],
+      "sortOrder": 3,
+      "sourceStatus": "ok"
+    },
+    {
       "slug": "big-2-stats",
       "repo": "owensantoso/big-2-stats",
       "title": "Big 2 Stats",
@@ -44,7 +60,7 @@
         "Dashboard",
         "Static site"
       ],
-      "sortOrder": 3,
+      "sortOrder": 4,
       "sourceStatus": "ok"
     },
     {
@@ -59,7 +75,7 @@
         "Chrome extension",
         "Maps"
       ],
-      "sortOrder": 4,
+      "sortOrder": 5,
       "sourceStatus": "ok"
     },
     {
@@ -74,7 +90,23 @@
         "OpenAI",
         "Transcription"
       ],
-      "sortOrder": 5,
+      "sortOrder": 6,
+      "sourceStatus": "ok"
+    },
+    {
+      "slug": "subtitle-companion-mvp",
+      "repo": "owensantoso/subtitle-companion-mvp",
+      "title": "Subtitle Companion MVP",
+      "description": "Static subtitle companion for Japanese study that loads local subtitle files, follows a virtual playback clock, supports furigana and dictionary lookups, and exports saved words for Anki.",
+      "imageUrl": null,
+      "liveUrl": "https://owensantoso.github.io/subtitle-companion-mvp/",
+      "githubUrl": "https://github.com/owensantoso/subtitle-companion-mvp",
+      "tags": [
+        "Japanese",
+        "Subtitles",
+        "Language learning"
+      ],
+      "sortOrder": 7,
       "sourceStatus": "ok"
     },
     {
@@ -89,7 +121,7 @@
         "Wearables",
         "Spotify"
       ],
-      "sortOrder": 6,
+      "sortOrder": 8,
       "sourceStatus": "ok"
     },
     {
@@ -104,7 +136,7 @@
         "Card game",
         "Utility"
       ],
-      "sortOrder": 7,
+      "sortOrder": 9,
       "sourceStatus": "ok"
     }
   ]

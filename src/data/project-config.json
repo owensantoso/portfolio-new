@@ -12,23 +12,41 @@
     "sortOrder": 2
   },
   {
+    "slug": "guitar-note-visualizer",
+    "repo": "owensantoso/guitar-note-visualizer",
+    "title": "Guitar Note Visualizer",
+    "description": "Desktop-first browser tuner that listens through the microphone, detects a stable single pitch, and visualizes the note, cents offset, piano class, and optional staff.",
+    "liveUrl": "https://owensantoso.github.io/guitar-note-visualizer/",
+    "tags": ["Music", "Web audio", "Visualization"],
+    "sortOrder": 3
+  },
+  {
     "slug": "big-2-stats",
     "repo": "owensantoso/big-2-stats",
     "tags": ["Dashboard", "Static site"],
-    "sortOrder": 3
+    "sortOrder": 4
   },
   {
     "slug": "jmty-map-chrome-extension",
     "repo": "owensantoso/jmty-map-chrome-extension",
     "title": "Jimoty Pickup Map",
     "tags": ["Chrome extension", "Maps"],
-    "sortOrder": 4
+    "sortOrder": 5
   },
   {
     "slug": "whisper-lecture-enhancer",
     "repo": "owensantoso/whisper-lecture-enhancer",
     "tags": ["OpenAI", "Transcription"],
-    "sortOrder": 5
+    "sortOrder": 6
+  },
+  {
+    "slug": "subtitle-companion-mvp",
+    "repo": "owensantoso/subtitle-companion-mvp",
+    "title": "Subtitle Companion MVP",
+    "description": "Static subtitle companion for Japanese study that loads local subtitle files, follows a virtual playback clock, supports furigana and dictionary lookups, and exports saved words for Anki.",
+    "liveUrl": "https://owensantoso.github.io/subtitle-companion-mvp/",
+    "tags": ["Japanese", "Subtitles", "Language learning"],
+    "sortOrder": 7
   },
   {
     "slug": "ar-spotify-lyrics",
@@ -36,12 +54,12 @@
     "title": "AR Spotify Lyrics",
     "imageUrl": "/portfolio-new/data/AR-spotify-lyrics.png",
     "tags": ["Wearables", "Spotify"],
-    "sortOrder": 6
+    "sortOrder": 8
   },
   {
     "slug": "big2-helper",
     "repo": "owensantoso/big2-helper",
     "tags": ["Card game", "Utility"],
-    "sortOrder": 7
+    "sortOrder": 9
   }
 ]
