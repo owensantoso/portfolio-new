@@ -21,9 +21,12 @@
     "sortOrder": 3
   },
   {
-    "slug": "big-2-stats",
-    "repo": "owensantoso/big-2-stats",
-    "tags": ["Dashboard", "Static site"],
+    "slug": "guitar-chord-companion",
+    "title": "Guitar Chord Companion",
+    "description": "Chrome extension for supported guitar tab sites that adds chord diagrams, stable practice views, saved song history, YouTube caption syncing, romanization, and draggable practice tools.",
+    "imageUrl": "/portfolio-new/data/project-images/guitar-chord-companion.png",
+    "liveUrl": "https://chromewebstore.google.com/detail/guitar-chord-companion/cogoejpbenjiggknidpfadfelhdlcinp",
+    "liveLabel": "Chrome Web Store",
     "sortOrder": 4
   },
   {
@@ -34,10 +37,18 @@
     "sortOrder": 5
   },
   {
+    "slug": "switchbot-tools",
+    "repo": "owensantoso/switchbot-tools",
+    "title": "SwitchBot Tools",
+    "description": "Local-first CLI for controlling SwitchBot lights, scenes, and nearby Bluetooth Low Energy devices, with installable shell commands, setup diagnostics, and credential-safe workflows.",
+    "tags": ["Python", "CLI", "Home automation"],
+    "sortOrder": 6
+  },
+  {
     "slug": "whisper-lecture-enhancer",
     "repo": "owensantoso/whisper-lecture-enhancer",
     "tags": ["OpenAI", "Transcription"],
-    "sortOrder": 6
+    "sortOrder": 7
   },
   {
     "slug": "subtitle-companion-mvp",
@@ -46,7 +57,25 @@
     "description": "Static subtitle companion for Japanese study that loads local subtitle files, follows a virtual playback clock, supports furigana and dictionary lookups, and exports saved words for Anki.",
     "liveUrl": "https://owensantoso.github.io/subtitle-companion-mvp/",
     "tags": ["Japanese", "Subtitles", "Language learning"],
-    "sortOrder": 7
+    "sortOrder": 8
+  },
+  {
+    "slug": "vgm-recordings-browser",
+    "repo": "owensantoso/vgm-recordings-browser",
+    "title": "VGM Recordings Browser",
+    "description": "Static media browser for 2026 video game music recordings with CSV-backed metadata, local thumbnails, Google Drive previews, inline audio playback, and filtered multi-select downloads.",
+    "liveUrl": "https://owensantoso.github.io/vgm-recordings-browser/",
+    "tags": ["Media archive", "Static site", "Audio"],
+    "sortOrder": 9
+  },
+  {
+    "slug": "xgimi-elfin-ble-wake",
+    "title": "XGIMI Projector Wake over BLE",
+    "description": "Reverse-engineering case study that mapped the XGIMI Elfin projector wake signal from Bluetooth Low Energy captures, proved a working ESP32 wake path, and documented why native macOS advertising could not emit the required manufacturer payload.",
+    "liveUrl": "/portfolio-new/case-studies/xgimi-elfin-ble-wake.html",
+    "liveLabel": "Case study",
+    "tags": ["Reverse engineering", "BLE", "ESP32"],
+    "sortOrder": 10
   },
   {
     "slug": "ar-spotify-lyrics",
@@ -54,12 +83,12 @@
     "title": "AR Spotify Lyrics",
     "imageUrl": "/portfolio-new/data/AR-spotify-lyrics.png",
     "tags": ["Wearables", "Spotify"],
-    "sortOrder": 8
+    "sortOrder": 11
   },
   {
     "slug": "big2-helper",
     "repo": "owensantoso/big2-helper",
     "tags": ["Card game", "Utility"],
-    "sortOrder": 9
+    "sortOrder": 12
   }
 ]

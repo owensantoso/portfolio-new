@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XGIMI Elfin BLE Wake Reverse Engineering</title>
+    <style>
+      :root {
+        color: #243126;
+        background: #f7f8f3;
+        font-family: Georgia, "Times New Roman", serif;
+        line-height: 1.55;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        width: min(760px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 56px 0 72px;
+      }
+
+      h1,
+      h2 {
+        line-height: 1.08;
+        font-weight: 400;
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        font-size: clamp(2.5rem, 8vw, 4.8rem);
+      }
+
+      h2 {
+        margin: 40px 0 12px;
+        font-size: 1.55rem;
+      }
+
+      p,
+      li {
+        color: #596456;
+        font-size: 1.05rem;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        color: #697467;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        font-size: 0.78rem;
+      }
+
+      .lede {
+        font-size: 1.18rem;
+      }
+
+      code {
+        padding: 0.1rem 0.28rem;
+        border-radius: 6px;
+        background: rgba(36, 49, 38, 0.08);
+      }
+
+      .note {
+        margin-top: 32px;
+        padding: 18px 20px;
+        border: 1px solid rgba(36, 49, 38, 0.14);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.62);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Reverse engineering case study</p>
+      <h1>XGIMI Elfin BLE Wake</h1>
+      <p class="lede">
+        I reverse engineered the Bluetooth Low Energy wake signal used by an
+        XGIMI Elfin projector remote, then replayed a safe wake advertisement
+        from an ESP32.
+      </p>
+
+      <h2>What Worked</h2>
+      <ul>
+        <li>Captured the remote's power-button advertisement with ESP32 and macOS witness tools.</li>
+        <li>Identified manufacturer ID <code>0x0046</code> and the stable wake payload tail.</li>
+        <li>Confirmed that ESP32 raw advertising could wake the projector without spoofing the remote address.</li>
+        <li>Documented the safer non-connectable advertisement path that preserved the original remote pairing.</li>
+      </ul>
+
+      <h2>What Did Not Work</h2>
+      <p>
+        Native macOS Bluetooth advertising reported success at the API layer,
+        but witness captures showed it did not emit the required manufacturer
+        data. That negative result became part of the protocol model instead of
+        being hidden as a failed attempt.
+      </p>
+
+      <h2>Why It Matters</h2>
+      <p>
+        The project is a practical example of protocol investigation: capture
+        real device behavior, separate facts from guesses, test safer replay
+        paths, and leave a handoff that another engineer can continue without
+        rereading a long chat log.
+      </p>
+
+      <div class="note">
+        The working repo is currently private because it contains device-specific
+        captures and hardware notes. This page summarizes the public-safe
+        engineering story.
+      </div>
+    </main>
+  </body>
+</html>

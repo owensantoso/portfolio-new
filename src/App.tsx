@@ -129,11 +129,11 @@ function App() {
       return projectCards
     }
 
-    return projectCards.filter((project) => {
-      const haystack = [
-        project.title,
-        project.description,
-        project.repo,
+      return projectCards.filter((project) => {
+        const haystack = [
+          project.title,
+          project.description,
+          project.repo,
         ...project.tags,
       ]
         .join(' ')
@@ -271,12 +271,14 @@ function App() {
                   <div className="project-links">
                     {project.liveUrl ? (
                       <a href={project.liveUrl} target="_blank" rel="noreferrer">
-                        Open website
+                        {project.liveLabel ?? 'Open website'}
                       </a>
                     ) : null}
-                    <a href={project.githubUrl} target="_blank" rel="noreferrer">
-                      GitHub
-                    </a>
+                    {project.githubUrl ? (
+                      <a href={project.githubUrl} target="_blank" rel="noreferrer">
+                        GitHub
+                      </a>
+                    ) : null}
                   </div>
                 </div>
               </article>

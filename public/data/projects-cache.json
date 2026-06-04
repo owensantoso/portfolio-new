@@ -1,13 +1,14 @@
 {
-  "generatedAt": "2026-04-22T01:57:03.154Z",
+  "generatedAt": "2026-06-04T19:15:32.622Z",
   "projects": [
     {
       "slug": "grocery-price-map",
       "repo": "owensantoso/grocery-price-map",
       "title": "Grocery Price Map",
-      "description": "A Next.js + Supabase app for logging grocery prices at exact store locations, preserving full history, and comparing the latest normalized price by item.",
-      "imageUrl": "/portfolio-new/data/project-images/grocery-price-map.png",
-      "liveUrl": "https://grocery-price-map.vercel.app",
+      "description": "Project details unavailable.",
+      "imageUrl": null,
+      "liveUrl": null,
+      "liveLabel": null,
       "githubUrl": "https://github.com/owensantoso/grocery-price-map",
       "tags": [
         "Next.js",
@@ -15,22 +16,25 @@
         "Maps"
       ],
       "sortOrder": 1,
-      "sourceStatus": "ok"
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/grocery-price-map: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
     },
     {
       "slug": "spotify-playlist-tracker",
       "repo": "owensantoso/spotify-playlist-tracker",
       "title": "Spotify Playlist Tracker",
-      "description": "A small full-stack app for watching one collaborative Spotify playlist over time.",
-      "imageUrl": "/portfolio-new/data/project-images/spotify-playlist-tracker.png",
-      "liveUrl": "https://spotify-playlist-tracker.vercel.app",
+      "description": "Project details unavailable.",
+      "imageUrl": null,
+      "liveUrl": null,
+      "liveLabel": null,
       "githubUrl": "https://github.com/owensantoso/spotify-playlist-tracker",
       "tags": [
         "Spotify",
         "Full stack"
       ],
       "sortOrder": 2,
-      "sourceStatus": "ok"
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/spotify-playlist-tracker: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
     },
     {
       "slug": "guitar-note-visualizer",
@@ -39,6 +43,7 @@
       "description": "Desktop-first browser tuner that listens through the microphone, detects a stable single pitch, and visualizes the note, cents offset, piano class, and optional staff.",
       "imageUrl": null,
       "liveUrl": "https://owensantoso.github.io/guitar-note-visualizer/",
+      "liveLabel": null,
       "githubUrl": "https://github.com/owensantoso/guitar-note-visualizer",
       "tags": [
         "Music",
@@ -46,20 +51,19 @@
         "Visualization"
       ],
       "sortOrder": 3,
-      "sourceStatus": "ok"
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/guitar-note-visualizer: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
     },
     {
-      "slug": "big-2-stats",
-      "repo": "owensantoso/big-2-stats",
-      "title": "Big 2 Stats",
-      "description": "Tiny static dashboard for tracking Owen vs Fiona Big 2 sessions from a published Google Sheets CSV.",
-      "imageUrl": "/portfolio-new/data/project-images/big-2-stats.png",
-      "liveUrl": "https://owensantoso.github.io/big-2-stats/",
-      "githubUrl": "https://github.com/owensantoso/big-2-stats",
-      "tags": [
-        "Dashboard",
-        "Static site"
-      ],
+      "slug": "guitar-chord-companion",
+      "repo": "",
+      "title": "Guitar Chord Companion",
+      "description": "Chrome extension for supported guitar tab sites that adds chord diagrams, stable practice views, saved song history, YouTube caption syncing, romanization, and draggable practice tools.",
+      "imageUrl": "/portfolio-new/data/project-images/guitar-chord-companion.png",
+      "liveUrl": "https://chromewebstore.google.com/detail/guitar-chord-companion/cogoejpbenjiggknidpfadfelhdlcinp",
+      "liveLabel": "Chrome Web Store",
+      "githubUrl": null,
+      "tags": [],
       "sortOrder": 4,
       "sourceStatus": "ok"
     },
@@ -67,31 +71,53 @@
       "slug": "jmty-map-chrome-extension",
       "repo": "owensantoso/jmty-map-chrome-extension",
       "title": "Jimoty Pickup Map",
-      "description": "Chrome extension that shows pickup location on a map on Jimoty item pages.",
-      "imageUrl": "/portfolio-new/data/project-images/jmty-map-chrome-extension.png",
-      "liveUrl": "https://chromewebstore.google.com/detail/jimoty-pickup-map/fpjalenbgdfpaghclllcilcaolphcjdo",
+      "description": "Project details unavailable.",
+      "imageUrl": null,
+      "liveUrl": null,
+      "liveLabel": null,
       "githubUrl": "https://github.com/owensantoso/jmty-map-chrome-extension",
       "tags": [
         "Chrome extension",
         "Maps"
       ],
       "sortOrder": 5,
-      "sourceStatus": "ok"
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/jmty-map-chrome-extension: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
+    },
+    {
+      "slug": "switchbot-tools",
+      "repo": "owensantoso/switchbot-tools",
+      "title": "SwitchBot Tools",
+      "description": "Local-first CLI for controlling SwitchBot lights, scenes, and nearby Bluetooth Low Energy devices, with installable shell commands, setup diagnostics, and credential-safe workflows.",
+      "imageUrl": null,
+      "liveUrl": null,
+      "liveLabel": null,
+      "githubUrl": "https://github.com/owensantoso/switchbot-tools",
+      "tags": [
+        "Python",
+        "CLI",
+        "Home automation"
+      ],
+      "sortOrder": 6,
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/switchbot-tools: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
     },
     {
       "slug": "whisper-lecture-enhancer",
       "repo": "owensantoso/whisper-lecture-enhancer",
       "title": "Whisper Lecture Enhancer",
-      "description": "OpenAI-Powered Video Automated Caption and Transcription",
-      "imageUrl": "/portfolio-new/data/project-images/whisper-lecture-enhancer.png",
+      "description": "Project details unavailable.",
+      "imageUrl": null,
       "liveUrl": null,
+      "liveLabel": null,
       "githubUrl": "https://github.com/owensantoso/whisper-lecture-enhancer",
       "tags": [
         "OpenAI",
         "Transcription"
       ],
-      "sortOrder": 6,
-      "sourceStatus": "ok"
+      "sortOrder": 7,
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/whisper-lecture-enhancer: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
     },
     {
       "slug": "subtitle-companion-mvp",
@@ -100,44 +126,85 @@
       "description": "Static subtitle companion for Japanese study that loads local subtitle files, follows a virtual playback clock, supports furigana and dictionary lookups, and exports saved words for Anki.",
       "imageUrl": null,
       "liveUrl": "https://owensantoso.github.io/subtitle-companion-mvp/",
+      "liveLabel": null,
       "githubUrl": "https://github.com/owensantoso/subtitle-companion-mvp",
       "tags": [
         "Japanese",
         "Subtitles",
         "Language learning"
       ],
-      "sortOrder": 7,
+      "sortOrder": 8,
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/subtitle-companion-mvp: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
+    },
+    {
+      "slug": "vgm-recordings-browser",
+      "repo": "owensantoso/vgm-recordings-browser",
+      "title": "VGM Recordings Browser",
+      "description": "Static media browser for 2026 video game music recordings with CSV-backed metadata, local thumbnails, Google Drive previews, inline audio playback, and filtered multi-select downloads.",
+      "imageUrl": null,
+      "liveUrl": "https://owensantoso.github.io/vgm-recordings-browser/",
+      "liveLabel": null,
+      "githubUrl": "https://github.com/owensantoso/vgm-recordings-browser",
+      "tags": [
+        "Media archive",
+        "Static site",
+        "Audio"
+      ],
+      "sortOrder": 9,
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/vgm-recordings-browser: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
+    },
+    {
+      "slug": "xgimi-elfin-ble-wake",
+      "repo": "",
+      "title": "XGIMI Projector Wake over BLE",
+      "description": "Reverse-engineering case study that mapped the XGIMI Elfin projector wake signal from Bluetooth Low Energy captures, proved a working ESP32 wake path, and documented why native macOS advertising could not emit the required manufacturer payload.",
+      "imageUrl": null,
+      "liveUrl": "/portfolio-new/case-studies/xgimi-elfin-ble-wake.html",
+      "liveLabel": "Case study",
+      "githubUrl": null,
+      "tags": [
+        "Reverse engineering",
+        "BLE",
+        "ESP32"
+      ],
+      "sortOrder": 10,
       "sourceStatus": "ok"
     },
     {
       "slug": "ar-spotify-lyrics",
       "repo": "owensantoso/AR-spotify-lyrics",
       "title": "AR Spotify Lyrics",
-      "description": "A personal MentraOS app that shows Spotify lyrics on Even Realities G1 glasses, with optional Chinese/Japanese/Korean romanization and live per-user settings.",
+      "description": "Project details unavailable.",
       "imageUrl": "/portfolio-new/data/AR-spotify-lyrics.png",
-      "liveUrl": "",
+      "liveUrl": null,
+      "liveLabel": null,
       "githubUrl": "https://github.com/owensantoso/AR-spotify-lyrics",
       "tags": [
         "Wearables",
         "Spotify"
       ],
-      "sortOrder": 8,
-      "sourceStatus": "ok"
+      "sortOrder": 11,
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/AR-spotify-lyrics: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
     },
     {
       "slug": "big2-helper",
       "repo": "owensantoso/big2-helper",
       "title": "Big2 Helper",
-      "description": "Mobile-friendly Big Two helper with a cheat sheet and settlement calculator",
-      "imageUrl": "/portfolio-new/data/project-images/big2-helper.png",
-      "liveUrl": "https://owensantoso.github.io/big2-helper/",
+      "description": "Project details unavailable.",
+      "imageUrl": null,
+      "liveUrl": null,
+      "liveLabel": null,
       "githubUrl": "https://github.com/owensantoso/big2-helper",
       "tags": [
         "Card game",
         "Utility"
       ],
-      "sortOrder": 9,
-      "sourceStatus": "ok"
+      "sortOrder": 12,
+      "sourceStatus": "error",
+      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/big2-helper: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
     }
   ]
 }

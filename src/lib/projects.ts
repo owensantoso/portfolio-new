@@ -1,7 +1,8 @@
 export type ProjectConfig = {
   slug: string
-  repo: string
+  repo?: string
   liveUrl?: string
+  liveLabel?: string
   githubUrl?: string
   title?: string
   description?: string
@@ -17,7 +18,8 @@ export type ProjectCardData = {
   description: string
   imageUrl: string | null
   liveUrl: string | null
-  githubUrl: string
+  liveLabel: string | null
+  githubUrl: string | null
   tags: string[]
   sortOrder: number
   sourceStatus: 'ok' | 'error'

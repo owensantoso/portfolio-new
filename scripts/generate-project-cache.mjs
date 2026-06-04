@@ -43,6 +43,14 @@ function repoNameToTitle(repo) {
     .join(' ')
 }
 
+function manualTitle(project) {
+  return project.title ?? project.slug
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 function buildRawBase(repo, branch) {
   const { owner, name } = parseRepo(repo)
   return `https://raw.githubusercontent.com/${owner}/${name}/${branch}/`
@@ -178,6 +186,24 @@ async function fetchReadme(repo) {
 }
 
 async function resolveProject(project) {
+  if (!project.repo) {
+    return {
+      slug: project.slug,
+      repo: '',
+      title: manualTitle(project),
+      description:
+        project.description ??
+        'A recent project with details maintained directly in this portfolio.',
+      imageUrl: project.imageUrl ?? null,
+      liveUrl: project.liveUrl ?? null,
+      liveLabel: project.liveLabel ?? null,
+      githubUrl: project.githubUrl ?? null,
+      tags: project.tags ?? [],
+      sortOrder: project.sortOrder ?? 999,
+      sourceStatus: 'ok',
+    }
+  }
+
   try {
     const { owner, name } = parseRepo(project.repo)
     const payload = await fetchJson(`${repoApiBase}/${owner}/${name}`)
@@ -201,6 +227,7 @@ async function resolveProject(project) {
           'A recent project with details pulled from GitHub when available.',
         imageUrl: null,
         liveUrl: project.liveUrl ?? payload.homepage ?? null,
+        liveLabel: project.liveLabel ?? null,
         githubUrl: project.githubUrl ?? payload.html_url,
         tags: project.tags ?? [],
         sortOrder: project.sortOrder ?? 999,
@@ -219,6 +246,7 @@ async function resolveProject(project) {
         'A recent project with details pulled from GitHub when available.',
       imageUrl,
       liveUrl: project.liveUrl ?? payload.homepage ?? null,
+      liveLabel: project.liveLabel ?? null,
       githubUrl: project.githubUrl ?? payload.html_url,
       tags: project.tags ?? [],
       sortOrder: project.sortOrder ?? 999,
@@ -232,6 +260,7 @@ async function resolveProject(project) {
       description: project.description ?? 'Project details unavailable.',
       imageUrl: project.imageUrl ?? null,
       liveUrl: project.liveUrl ?? null,
+      liveLabel: project.liveLabel ?? null,
       githubUrl: project.githubUrl ?? `https://github.com/${project.repo}`,
       tags: project.tags ?? [],
       sortOrder: project.sortOrder ?? 999,
