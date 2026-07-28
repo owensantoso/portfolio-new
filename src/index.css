@@ -2,22 +2,22 @@
   font-family: "Newsreader", Georgia, serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #243126;
+  color: #242131;
   background:
-    radial-gradient(circle at top, rgba(216, 225, 214, 0.55), transparent 36%),
-    linear-gradient(180deg, #fbfbf7 0%, #f3f4ef 100%);
+    radial-gradient(circle at top, rgba(255, 240, 205, 0.55), transparent 38%),
+    linear-gradient(180deg, #fbf7ec 0%, #f3ecdb 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --ink: #243126;
-  --ink-soft: #3e5143;
-  --muted: #697467;
-  --surface: rgba(255, 255, 255, 0.78);
-  --chip: rgba(240, 243, 236, 0.9);
-  --border: rgba(36, 49, 38, 0.12);
-  --border-strong: rgba(36, 49, 38, 0.22);
+  --ink: #242131;
+  --ink-soft: #3c3752;
+  --muted: #706a80;
+  --surface: rgba(255, 253, 246, 0.82);
+  --chip: rgba(243, 236, 219, 0.85);
+  --border: rgba(35, 33, 49, 0.12);
+  --border-strong: rgba(35, 33, 49, 0.22);
   --accent-hanko: #b23a2e;
   --tape: rgba(178, 58, 46, 0.1);
   --status-live: #3f8f5f;
@@ -74,9 +74,22 @@ h1 {
 }
 
 h2 {
+  position: relative;
   margin: 0;
+  padding-left: 18px;
   font-size: clamp(1.8rem, 3vw, 2.4rem);
   line-height: 1.05;
+}
+
+h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.4em;
+  width: 8px;
+  height: 8px;
+  background: var(--accent-hanko);
+  transform: rotate(45deg);
 }
 
 p {

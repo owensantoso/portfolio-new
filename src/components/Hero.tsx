@@ -3,7 +3,9 @@ import { CONTACT, HERO_PHOTO_URL, HERO_ROLE, HERO_TAGLINE } from '../data/site-c
 export function Hero() {
   return (
     <section className="hero">
-      <p className="eyebrow">toso</p>
+      <p className="eyebrow">
+        toso <span className="eyebrow-location">· {CONTACT.location}</span>
+      </p>
       <div className="hero-main">
         {HERO_PHOTO_URL ? (
           <div className="hero-photo-frame">

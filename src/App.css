@@ -12,11 +12,21 @@
 }
 
 .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
-  color: var(--muted);
+  color: var(--accent-hanko);
   text-transform: uppercase;
   letter-spacing: 0.22em;
   font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.eyebrow-location {
+  color: var(--muted);
+  font-weight: 400;
+  letter-spacing: 0.1em;
 }
 
 .hero-main {
@@ -84,8 +94,8 @@
 }
 
 .search-input:focus {
-  border-color: var(--border-strong);
-  box-shadow: 0 0 0 4px rgba(36, 49, 38, 0.06);
+  border-color: var(--accent-hanko);
+  box-shadow: 0 0 0 4px var(--tape);
 }
 
 .profile-link {
@@ -101,13 +111,20 @@
   transition:
     transform 160ms ease,
     border-color 160ms ease,
+    background 160ms ease,
     box-shadow 160ms ease;
 }
 
 .profile-link:hover {
   transform: translateY(-1px);
-  border-color: var(--ink-soft);
-  box-shadow: 0 14px 30px rgba(19, 31, 23, 0.08);
+  border-color: var(--accent-hanko);
+  background: var(--tape);
+  box-shadow: 0 14px 30px rgba(178, 58, 46, 0.14);
+}
+
+.profile-link:first-child {
+  border-color: var(--accent-hanko);
+  color: var(--accent-hanko);
 }
 
 .tag-filter-row {
@@ -338,8 +355,8 @@
 
 .project-card:hover {
   transform: translateY(-4px);
-  border-color: var(--border-strong);
-  box-shadow: 0 26px 54px rgba(16, 24, 19, 0.12);
+  border-color: var(--accent-hanko);
+  box-shadow: 0 26px 54px rgba(178, 58, 46, 0.14);
 }
 
 .project-image-link {
@@ -425,6 +442,11 @@
   font-size: 0.86rem;
   line-height: 1.1;
   white-space: nowrap;
+  transform: rotate(-1deg);
+}
+
+.tag-list li:nth-child(even) {
+  transform: rotate(1deg);
 }
 
 .project-links {
