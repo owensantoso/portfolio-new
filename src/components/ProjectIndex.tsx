@@ -157,13 +157,18 @@ export function ProjectIndex({
 
             <div className="index-links">
               {project.liveUrl ? (
-                <a className="index-link index-link-primary" href={project.liveUrl} target="_blank" rel="noreferrer">
+                <a
+                  className="action-link action-link-primary"
+                  href={project.liveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   <LinkIcon name={primaryLinkIcon(project.liveLabel ?? 'Open')} />
                   {project.liveLabel ?? 'Open'}
                 </a>
               ) : null}
               {project.githubUrl ? (
-                <a className="index-link" href={project.githubUrl} target="_blank" rel="noreferrer">
+                <a className="action-link" href={project.githubUrl} target="_blank" rel="noreferrer">
                   <LinkIcon name="github" />
                   Source
                 </a>

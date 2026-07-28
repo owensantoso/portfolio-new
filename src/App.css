@@ -379,37 +379,6 @@
   border-bottom-color: var(--accent-hanko);
 }
 
-.featured-section {
-  padding: 40px 0 8px;
-}
-
-.featured-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 26px;
-  margin-top: 20px;
-}
-
-.featured-card {
-  display: flex;
-  flex-direction: column;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  overflow: clip;
-  box-shadow: 0 18px 45px rgba(16, 24, 19, 0.06);
-}
-
-.featured-card .project-image-link {
-  aspect-ratio: 16 / 10;
-}
-
-.featured-body {
-  display: grid;
-  gap: 12px;
-  padding: 22px;
-}
-
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -532,6 +501,48 @@
   border: 1px solid var(--border);
   border-radius: 18px;
   background: var(--surface);
+}
+
+/* Shared by the featured bands and the project index so an action reads the same
+   way wherever it appears. */
+.action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.84rem;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.action-link svg {
+  flex: 0 0 auto;
+  opacity: 0.75;
+}
+
+.action-link:hover {
+  color: var(--accent-hanko);
+  border-color: var(--accent-hanko);
+  background: var(--glass-strong);
+  transform: translateY(-1px);
+}
+
+.action-link:hover svg {
+  opacity: 1;
+}
+
+.action-link-primary {
+  color: var(--ink);
 }
 
 .all-projects-cta {
@@ -662,10 +673,6 @@
 
   .hero-photo-frame {
     width: 108px;
-  }
-
-  .featured-grid {
-    grid-template-columns: 1fr;
   }
 
   .experience-heading {

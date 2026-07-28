@@ -1,0 +1,157 @@
+.featured-section {
+  padding: 40px 0 8px;
+}
+
+.featured-bands {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+/* Full-width bands rather than three equal cards: each project gets real presence,
+   the media can be large enough to actually show the work, and every band is its own
+   row so nothing drifts out of alignment when descriptions differ in length. */
+.featured-band {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 34px;
+  align-items: stretch;
+  padding: 30px 0;
+  border-top: 1px solid var(--border);
+}
+
+.featured-band:last-child {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Alternating sides give the run of bands some rhythm. The track sizes swap too,
+   otherwise the media lands in the narrower column on every other band and its
+   height stops matching. */
+.featured-band:nth-child(even) {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+}
+
+.featured-band:nth-child(even) .featured-media {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.featured-band:nth-child(even) .featured-content {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.featured-media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: 14px;
+  overflow: clip;
+  border: 1px solid var(--glass-border);
+  background: var(--chip);
+  box-shadow: var(--glass-shadow);
+}
+
+/* MediaThumbnail fills whatever box it is dropped into. */
+.featured-media .project-image-link {
+  aspect-ratio: auto;
+  height: 100%;
+  cursor: zoom-in;
+}
+
+.featured-media-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: 'Instrument Serif', 'Times New Roman', serif;
+  font-size: 3rem;
+  color: var(--muted);
+  opacity: 0.45;
+}
+
+.featured-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+.featured-content-top {
+  display: grid;
+  gap: 12px;
+}
+
+.featured-content h3 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.4vw, 1.95rem);
+  line-height: 1.12;
+}
+
+.featured-description {
+  margin: 0;
+  line-height: 1.6;
+  max-width: 46ch;
+}
+
+.featured-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+}
+
+.featured-tags li {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.featured-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.featured-more {
+  margin-left: auto;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 2px;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.featured-more:hover {
+  color: var(--accent-hanko);
+  border-bottom-color: var(--accent-hanko);
+}
+
+@media (max-width: 860px) {
+  .featured-band,
+  .featured-band:nth-child(even) .featured-media,
+  .featured-band:nth-child(even) .featured-content {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .featured-band {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 24px 0;
+  }
+
+  .featured-more {
+    margin-left: 0;
+  }
+}
