@@ -23,7 +23,7 @@ export function Featured({ projects, onOpenMedia }: FeaturedProps) {
   }
 
   return (
-    <section className="featured-section" aria-label="Featured projects">
+    <section id="featured" className="featured-section" aria-label="Featured projects">
       <h2>Featured</h2>
       <div className="featured-grid">
         {featured.map((project) => (

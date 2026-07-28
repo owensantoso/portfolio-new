@@ -6,6 +6,9 @@ export const CONTACT = {
   location: 'Tokyo, Japan',
 }
 
+export const HOME_URL = import.meta.env.BASE_URL
+export const PROJECTS_URL = `${import.meta.env.BASE_URL}projects/`
+
 export const HERO_ROLE = 'Owen Santoso'
 
 export const HERO_TAGLINE =
@@ -90,6 +93,76 @@ export const SKILLS: SkillGroup[] = [
     items: ['Maps & geospatial', 'Audio & signal processing', 'AI/LLM tooling', 'Hardware-adjacent (BLE, embedded)'],
   },
 ]
+
+export type SkillSource =
+  | { kind: 'project'; label: string; slug: string }
+  | { kind: 'role'; label: string }
+
+/**
+ * Where each skill actually came from. Only claims backed by the résumé or by a
+ * real project in project-config.json. Skills with no entry here just don't expand.
+ */
+export const SKILL_SOURCES: Record<string, SkillSource[]> = {
+  Java: [{ kind: 'role', label: 'LogicVein, backend features' }],
+  Kotlin: [{ kind: 'role', label: 'LogicVein, backend features' }],
+  JavaScript: [
+    { kind: 'role', label: 'LogicVein, React frontend' },
+    { kind: 'project', label: 'Guitar Chord Companion', slug: 'guitar-chord-companion' },
+    { kind: 'project', label: 'Jimoty Pickup Map', slug: 'jmty-map-chrome-extension' },
+    { kind: 'project', label: 'Subtitle Companion MVP', slug: 'subtitle-companion-mvp' },
+  ],
+  Python: [
+    { kind: 'role', label: 'exida, safety-certificate automation' },
+    { kind: 'project', label: 'SwitchBot Tools', slug: 'switchbot-tools' },
+    { kind: 'project', label: 'Whisper Lecture Enhancer', slug: 'whisper-lecture-enhancer' },
+  ],
+  SQL: [
+    { kind: 'role', label: 'LogicVein' },
+    { kind: 'project', label: 'Grocery Price Map', slug: 'grocery-price-map' },
+  ],
+  C: [{ kind: 'project', label: 'XGIMI Projector Wake over BLE', slug: 'xgimi-elfin-ble-wake' }],
+  React: [
+    { kind: 'role', label: 'LogicVein, frontend features' },
+    { kind: 'project', label: 'Grocery Price Map', slug: 'grocery-price-map' },
+  ],
+  Redux: [{ kind: 'role', label: 'LogicVein, application state' }],
+  'REST APIs': [
+    { kind: 'role', label: 'LogicVein, endpoint to UI integration' },
+    { kind: 'project', label: 'Spotify Playlist Tracker', slug: 'spotify-playlist-tracker' },
+    { kind: 'project', label: 'AR Spotify Lyrics', slug: 'ar-spotify-lyrics' },
+  ],
+  'HTML/CSS': [
+    { kind: 'role', label: 'LogicVein, frontend features' },
+    { kind: 'project', label: 'Big2 Helper', slug: 'big2-helper' },
+    { kind: 'project', label: 'VGM Recordings Browser', slug: 'vgm-recordings-browser' },
+  ],
+  Git: [{ kind: 'role', label: 'LogicVein, and every project here' }],
+  Linux: [
+    { kind: 'role', label: 'LogicVein' },
+    { kind: 'project', label: 'SwitchBot Tools', slug: 'switchbot-tools' },
+  ],
+  Docker: [{ kind: 'role', label: 'LogicVein' }],
+  PostgreSQL: [{ kind: 'project', label: 'Grocery Price Map, via Supabase', slug: 'grocery-price-map' }],
+  'Maps & geospatial': [
+    { kind: 'project', label: 'Grocery Price Map', slug: 'grocery-price-map' },
+    { kind: 'project', label: 'Jimoty Pickup Map', slug: 'jmty-map-chrome-extension' },
+    { kind: 'project', label: 'Train Shade Seat', slug: 'train-shade-seat' },
+  ],
+  'Audio & signal processing': [
+    { kind: 'project', label: 'Guitar Note Visualizer', slug: 'guitar-note-visualizer' },
+    { kind: 'project', label: 'Whisper Lecture Enhancer', slug: 'whisper-lecture-enhancer' },
+    { kind: 'project', label: 'VGM Recordings Browser', slug: 'vgm-recordings-browser' },
+  ],
+  'AI/LLM tooling': [
+    { kind: 'project', label: 'Whisper Lecture Enhancer', slug: 'whisper-lecture-enhancer' },
+    { kind: 'project', label: 'Aiko Dictionary', slug: 'aiko-dictionary' },
+  ],
+  'Hardware-adjacent (BLE, embedded)': [
+    { kind: 'project', label: 'XGIMI Projector Wake over BLE', slug: 'xgimi-elfin-ble-wake' },
+    { kind: 'project', label: 'SwitchBot Tools', slug: 'switchbot-tools' },
+    { kind: 'project', label: 'AR Spotify Lyrics', slug: 'ar-spotify-lyrics' },
+  ],
+}
 
 export type ProjectCategory = {
   label: string

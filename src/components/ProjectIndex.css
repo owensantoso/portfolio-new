@@ -1,0 +1,223 @@
+.index-header {
+  display: grid;
+  gap: 12px;
+  padding: 8px 0 32px;
+  max-width: 54ch;
+}
+
+.index-header p {
+  line-height: 1.6;
+}
+
+.index-controls {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 10px;
+}
+
+.index-count {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.index-clear {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent-hanko);
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+}
+
+.index-clear:hover {
+  border-bottom-color: var(--accent-hanko);
+}
+
+/* An index, not a card wall: hairline-separated rows, no boxes or shadows. */
+.project-index {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border);
+}
+
+.index-row {
+  display: grid;
+  grid-template-columns: 116px 1fr auto;
+  gap: 24px;
+  align-items: start;
+  padding: 22px 12px;
+  margin: 0 -12px;
+  border-bottom: 1px solid var(--border);
+  border-radius: 6px;
+  transition: background 180ms ease;
+}
+
+.index-row:hover {
+  background: rgba(255, 253, 246, 0.7);
+}
+
+.index-row[data-highlighted='true'] {
+  animation: index-row-flag 2400ms ease-out;
+}
+
+@keyframes index-row-flag {
+  0%,
+  55% {
+    background: var(--tape);
+    box-shadow: inset 3px 0 0 var(--accent-hanko);
+  }
+
+  100% {
+    background: transparent;
+    box-shadow: inset 3px 0 0 transparent;
+  }
+}
+
+.index-thumb {
+  position: relative;
+  width: 116px;
+  aspect-ratio: 16 / 11;
+  border-radius: 4px;
+  overflow: clip;
+  border: 1px solid var(--border);
+  background: var(--chip);
+}
+
+/* MediaThumbnail renders a button that fills whatever box it is dropped into. */
+.index-thumb .project-image-link {
+  aspect-ratio: auto;
+  height: 100%;
+  cursor: zoom-in;
+}
+
+.index-thumb .media-play-icon {
+  right: 6px;
+  bottom: 6px;
+  width: 22px;
+  height: 22px;
+  font-size: 0.55rem;
+}
+
+.index-thumb-placeholder {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: 'Instrument Serif', 'Times New Roman', serif;
+  font-size: 1.7rem;
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.index-body {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.index-row-heading {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.index-row-heading h2 {
+  margin: 0;
+  padding-left: 0;
+  font-size: 1.22rem;
+  line-height: 1.2;
+}
+
+/* The global h2 rule adds a hanko tick before section headings; rows are not sections. */
+.index-row-heading h2::before {
+  content: none;
+}
+
+.index-description {
+  margin: 0;
+  line-height: 1.55;
+  max-width: 62ch;
+}
+
+/* Spacing alone separates these. A "·" pseudo-element strands itself at the
+   start of a wrapped line, which reads as a typo on narrow screens. */
+.index-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+}
+
+.index-tags li {
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.index-links {
+  display: grid;
+  gap: 8px;
+  justify-items: end;
+  text-align: right;
+}
+
+.index-links a {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-strong);
+  padding-bottom: 1px;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.index-links a:hover {
+  color: var(--accent-hanko);
+  border-bottom-color: var(--accent-hanko);
+}
+
+.tag-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .index-row,
+  .index-row[data-highlighted='true'] {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .index-row {
+    grid-template-columns: 84px 1fr;
+    gap: 16px;
+    padding: 18px 10px;
+  }
+
+  .index-thumb {
+    width: 84px;
+  }
+
+  .index-links {
+    grid-column: 2;
+    justify-items: start;
+    text-align: left;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+}

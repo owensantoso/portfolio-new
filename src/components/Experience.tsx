@@ -2,7 +2,7 @@ import { EXPERIENCE } from '../data/site-content'
 
 export function Experience() {
   return (
-    <section className="experience-section" aria-label="Experience">
+    <section id="experience" className="experience-section" aria-label="Experience">
       <h2>Experience</h2>
       <ul className="experience-list">
         {EXPERIENCE.map((entry) => (

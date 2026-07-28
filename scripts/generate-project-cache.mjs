@@ -282,9 +282,52 @@ async function resolveProject(project) {
   }
 }
 
+async function readExistingCache() {
+  try {
+    const raw = JSON.parse(await readFile(outputPath, 'utf8'))
+    return new Map(raw.projects.map((project) => [project.slug, project]))
+  } catch {
+    // No usable cache yet (first run, or unreadable file).
+    return new Map()
+  }
+}
+
+/**
+ * A failed GitHub lookup must never downgrade data we already have. Rate limits and
+ * transient errors would otherwise replace real descriptions and images with
+ * "Project details unavailable." on the live site.
+ */
+function preferPreviousOnError(resolved, previous) {
+  if (resolved.sourceStatus !== 'error' || !previous) {
+    return resolved
+  }
+
+  return {
+    ...previous,
+    // Config-owned fields still win, so editing project-config.json always takes effect.
+    tags: resolved.tags,
+    sortOrder: resolved.sortOrder,
+    featured: resolved.featured,
+    status: resolved.status,
+    liveLabel: resolved.liveLabel,
+    sourceStatus: 'stale',
+    fetchError: resolved.fetchError,
+  }
+}
+
 async function main() {
   const projectConfig = JSON.parse(await readFile(configPath, 'utf8'))
-  const resolvedProjects = await Promise.all(projectConfig.map(resolveProject))
+  const existing = await readExistingCache()
+  const resolvedProjects = (await Promise.all(projectConfig.map(resolveProject))).map((project) =>
+    preferPreviousOnError(project, existing.get(project.slug)),
+  )
+
+  const staleCount = resolvedProjects.filter((project) => project.sourceStatus === 'stale').length
+
+  if (staleCount > 0) {
+    console.warn(`Kept previously cached details for ${staleCount} project(s) after GitHub lookup failures.`)
+  }
+
   const payload = {
     generatedAt: new Date().toISOString(),
     projects: resolvedProjects,

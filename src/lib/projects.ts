@@ -30,7 +30,8 @@ export type ProjectCardData = {
   sortOrder: number
   featured: boolean
   status: ProjectStatus | null
-  sourceStatus: 'ok' | 'error'
+  /** 'stale' means a GitHub refresh failed but previously cached details were kept. */
+  sourceStatus: 'ok' | 'error' | 'stale'
 }
 
 export type ProjectCache = {

@@ -1,30 +1,23 @@
 import type { ReactNode } from 'react'
+import { PROJECTS_URL } from '../data/site-content'
 
 type ProjectMentionLinkProps = {
   slug: string
   imageUrl: string
   mediaUrl?: string
-  onSelect: (slug: string) => void
   children: ReactNode
 }
 
-export function ProjectMentionLink({ slug, imageUrl, mediaUrl, onSelect, children }: ProjectMentionLinkProps) {
+/**
+ * Inline prose link to a project. Hovering shows a preview; clicking goes to the
+ * projects page anchored at that project, which scrolls to and highlights it.
+ */
+export function ProjectMentionLink({ slug, imageUrl, mediaUrl, children }: ProjectMentionLinkProps) {
   return (
-    <a
-      href={`#project-${slug}`}
-      className="project-mention"
-      onClick={(event) => {
-        event.preventDefault()
-        onSelect(slug)
-      }}
-    >
+    <a href={`${PROJECTS_URL}#project-${slug}`} className="project-mention">
       {children}
       <span className="project-mention-preview" aria-hidden="true">
-        {mediaUrl ? (
-          <video src={mediaUrl} autoPlay muted loop playsInline />
-        ) : (
-          <img src={imageUrl} alt="" />
-        )}
+        {mediaUrl ? <video src={mediaUrl} autoPlay muted loop playsInline /> : <img src={imageUrl} alt="" />}
       </span>
     </a>
   )
