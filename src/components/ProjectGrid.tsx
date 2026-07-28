@@ -11,6 +11,7 @@ type ProjectGridProps = {
   onToggleTag: (tag: string) => void
   filteredProjects: ProjectCardData[]
   onOpenMedia: (media: MediaSelection) => void
+  highlightedSlug: string | null
 }
 
 export function ProjectGrid({
@@ -22,6 +23,7 @@ export function ProjectGrid({
   onToggleTag,
   filteredProjects,
   onOpenMedia,
+  highlightedSlug,
 }: ProjectGridProps) {
   return (
     <>
@@ -67,7 +69,11 @@ export function ProjectGrid({
 
       <section id="projects" className="project-grid" aria-label="Project list">
         {filteredProjects.map((project) => (
-          <article className="project-card" key={project.slug}>
+          <article
+            id={`project-${project.slug}`}
+            className={`project-card${project.slug === highlightedSlug ? ' project-card-highlighted' : ''}`}
+            key={project.slug}
+          >
             <MediaThumbnail
               imageUrl={project.imageUrl}
               mediaUrl={project.mediaUrl}

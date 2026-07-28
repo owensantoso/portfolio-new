@@ -15,8 +15,28 @@ export const HERO_TAGLINE =
 // (e.g. "/portfolio-new/data/owen-portrait.jpg"). Hero renders no photo frame while this is null.
 export const HERO_PHOTO_URL: string | null = null
 
-export const ABOUT_TEXT =
-  "I'm a software engineer based in Tokyo with a background in electrical and electronic engineering. Professionally I've worked across Java, Kotlin, React and SQL inside a ten-plus-year production codebase at LogicVein, shipping full-stack features and chasing down UI defects and race conditions. Outside of work I build tools around problems I run into myself: a Chrome extension that puts a map on Jimoty listings, a page that tracks one Spotify playlist over time, glasses that show synced lyrics. I like projects that force me to connect things that weren't built to talk to each other. Native English, JLPT N2 Japanese."
+export const ABOUT_INTRO =
+  "I'm a software engineer based in Tokyo with a background in electrical and electronic engineering. Professionally I've worked across Java, Kotlin, React and SQL inside a ten-plus-year production codebase at LogicVein, shipping full-stack features and chasing down UI defects and race conditions."
+
+export const ABOUT_CLOSING =
+  "I like projects that force me to connect things that weren't built to talk to each other. Native English, JLPT N2 Japanese."
+
+// Slugs referenced inline in About.tsx's second paragraph. Image paths mirror
+// what's already in project-config.json for these three projects.
+export const ABOUT_MENTIONS = {
+  jimoty: {
+    slug: 'jmty-map-chrome-extension',
+    imageUrl: '/portfolio-new/data/project-images/jmty-map-chrome-extension.png',
+  },
+  spotifyTracker: {
+    slug: 'spotify-playlist-tracker',
+    imageUrl: '/portfolio-new/data/project-images/spotify-playlist-tracker.png',
+  },
+  arLyrics: {
+    slug: 'ar-spotify-lyrics',
+    imageUrl: '/portfolio-new/data/AR-spotify-lyrics.png',
+  },
+}
 
 export type ExperienceEntry = {
   company: string

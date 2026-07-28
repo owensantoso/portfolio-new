@@ -18,6 +18,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTags, setActiveTags] = useState<string[]>([])
   const [selectedMedia, setSelectedMedia] = useState<MediaSelection | null>(null)
+  const [highlightedSlug, setHighlightedSlug] = useState<string | null>(null)
 
   useEffect(() => {
     let isCancelled = false
@@ -119,13 +120,36 @@ function App() {
     )
   }
 
+  function handleSelectProject(slug: string) {
+    setSearchQuery('')
+    setActiveTags([])
+    setHighlightedSlug(slug)
+  }
+
+  useEffect(() => {
+    if (!highlightedSlug) {
+      return
+    }
+
+    const scrollTimeoutId = window.setTimeout(() => {
+      document.getElementById(`project-${highlightedSlug}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 50)
+
+    const clearTimeoutId = window.setTimeout(() => setHighlightedSlug(null), 1800)
+
+    return () => {
+      window.clearTimeout(scrollTimeoutId)
+      window.clearTimeout(clearTimeoutId)
+    }
+  }, [highlightedSlug])
+
   return (
     <main className="page-shell">
       <Hero />
 
       <Featured projects={projectCards} onOpenMedia={setSelectedMedia} />
 
-      <About />
+      <About onSelectProject={handleSelectProject} />
 
       <Experience />
 
@@ -140,6 +164,7 @@ function App() {
         onToggleTag={handleToggleTag}
         filteredProjects={filteredProjects}
         onOpenMedia={setSelectedMedia}
+        highlightedSlug={highlightedSlug}
       />
 
       <Footer />
