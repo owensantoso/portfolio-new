@@ -1,4 +1,5 @@
 import { CONTACT, HERO_PHOTO_URL, HERO_ROLE, HERO_TAGLINE } from '../data/site-content'
+import { LinkIcon } from './LinkIcon'
 
 export function Hero() {
   return (
@@ -20,15 +21,19 @@ export function Hero() {
               View projects
             </a>
             <a className="profile-link" href={CONTACT.github} target="_blank" rel="noreferrer">
+              <LinkIcon name="github" />
               GitHub
             </a>
             <a className="profile-link" href={CONTACT.linkedin} target="_blank" rel="noreferrer">
+              <LinkIcon name="linkedin" />
               LinkedIn
             </a>
             <a className="profile-link" href={CONTACT.resumeUrl} target="_blank" rel="noreferrer">
+              <LinkIcon name="resume" />
               Résumé
             </a>
             <a className="profile-link" href={`mailto:${CONTACT.email}`}>
+              <LinkIcon name="email" />
               Email
             </a>
           </div>
