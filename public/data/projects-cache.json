@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-07-28T17:30:44.500Z",
+  "generatedAt": "2026-07-28T19:32:30.930Z",
   "projects": [
     {
       "slug": "grocery-price-map",
       "repo": "owensantoso/grocery-price-map",
       "title": "Grocery Price Map",
       "description": "A Next.js + Supabase app for logging grocery prices at exact store locations, preserving full history, and comparing the latest normalized price by item.",
-      "imageUrl": null,
+      "imageUrl": "/data/project-images/grocery-price-map.png",
       "mediaUrl": null,
       "liveUrl": "https://grocery-price-map.vercel.app",
       "liveLabel": null,
@@ -26,7 +26,7 @@
       "repo": "owensantoso/spotify-playlist-tracker",
       "title": "Spotify Playlist Tracker",
       "description": "A small full-stack app for watching one collaborative Spotify playlist over time.",
-      "imageUrl": null,
+      "imageUrl": "/data/project-images/spotify-playlist-tracker.png",
       "mediaUrl": null,
       "liveUrl": "https://spotify-playlist-tracker.vercel.app",
       "liveLabel": null,
@@ -58,15 +58,14 @@
       "sortOrder": 3,
       "featured": false,
       "status": null,
-      "sourceStatus": "stale",
-      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/guitar-note-visualizer: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
+      "sourceStatus": "ok"
     },
     {
       "slug": "guitar-chord-companion",
       "repo": "",
       "title": "Guitar Chord Companion",
       "description": "Chrome extension for supported guitar tab sites that adds chord diagrams, stable practice views, saved song history, YouTube caption syncing, romanization, and draggable practice tools.",
-      "imageUrl": "/portfolio-new/data/project-images/guitar-chord-companion.png",
+      "imageUrl": "/data/project-images/guitar-chord-companion.png",
       "mediaUrl": null,
       "liveUrl": "https://chromewebstore.google.com/detail/guitar-chord-companion/cogoejpbenjiggknidpfadfelhdlcinp",
       "liveLabel": "Chrome Web Store",
@@ -82,7 +81,7 @@
       "repo": "owensantoso/jmty-map-chrome-extension",
       "title": "Jimoty Pickup Map",
       "description": "Chrome extension that shows pickup location on a map on Jimoty item pages.",
-      "imageUrl": null,
+      "imageUrl": "/data/project-images/jmty-map-chrome-extension.png",
       "mediaUrl": null,
       "liveUrl": "https://chromewebstore.google.com/detail/jimoty-pickup-map/fpjalenbgdfpaghclllcilcaolphcjdo",
       "liveLabel": null,
@@ -114,15 +113,14 @@
       "sortOrder": 6,
       "featured": false,
       "status": null,
-      "sourceStatus": "stale",
-      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/switchbot-tools: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
+      "sourceStatus": "ok"
     },
     {
       "slug": "whisper-lecture-enhancer",
       "repo": "owensantoso/whisper-lecture-enhancer",
       "title": "Whisper Lecture Enhancer",
       "description": "OpenAI-Powered Video Automated Caption and Transcription",
-      "imageUrl": null,
+      "imageUrl": "/data/project-images/whisper-lecture-enhancer.png",
       "mediaUrl": null,
       "liveUrl": null,
       "liveLabel": null,
@@ -183,7 +181,7 @@
       "description": "Reverse-engineering case study that mapped the XGIMI Elfin projector wake signal from Bluetooth Low Energy captures, proved a working ESP32 wake path, and documented why native macOS advertising could not emit the required manufacturer payload.",
       "imageUrl": null,
       "mediaUrl": null,
-      "liveUrl": "/portfolio-new/case-studies/xgimi-elfin-ble-wake.html",
+      "liveUrl": "/case-studies/xgimi-elfin-ble-wake.html",
       "liveLabel": "Case study",
       "githubUrl": null,
       "tags": [
@@ -201,7 +199,7 @@
       "repo": "owensantoso/AR-spotify-lyrics",
       "title": "AR Spotify Lyrics",
       "description": "A personal MentraOS app that shows Spotify lyrics on Even Realities G1 glasses, with optional Chinese/Japanese/Korean romanization and live per-user settings.",
-      "imageUrl": "/portfolio-new/data/AR-spotify-lyrics.png",
+      "imageUrl": "/data/AR-spotify-lyrics.png",
       "mediaUrl": null,
       "liveUrl": "",
       "liveLabel": null,
@@ -213,15 +211,14 @@
       "sortOrder": 11,
       "featured": true,
       "status": "prototype",
-      "sourceStatus": "stale",
-      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/AR-spotify-lyrics: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
+      "sourceStatus": "ok"
     },
     {
       "slug": "big2-helper",
       "repo": "owensantoso/big2-helper",
       "title": "Big2 Helper",
       "description": "Mobile-friendly Big Two helper with a cheat sheet and settlement calculator",
-      "imageUrl": "/portfolio-new/data/project-images/big2-helper.png",
+      "imageUrl": "/data/project-images/big2-helper.png",
       "mediaUrl": null,
       "liveUrl": "https://owensantoso.github.io/big2-helper/",
       "liveLabel": null,
@@ -233,16 +230,15 @@
       "sortOrder": 12,
       "featured": false,
       "status": null,
-      "sourceStatus": "stale",
-      "fetchError": "Request failed (403) for https://api.github.com/repos/owensantoso/big2-helper: {\"message\":\"API rate limit exceeded for 138.64.86.211. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)\",\"documentation_url\":\"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting\"}\n"
+      "sourceStatus": "ok"
     },
     {
       "slug": "aiko-dictionary",
       "repo": "",
       "title": "Aiko Dictionary",
       "description": "A macOS dictionary app for Japanese learners, currently an early alpha build.",
-      "imageUrl": "/portfolio-new/data/aiko.png",
-      "mediaUrl": "/portfolio-new/data/project-media/aiko-dictionary.mp4",
+      "imageUrl": "/data/aiko.png",
+      "mediaUrl": "/data/project-media/aiko-dictionary.mp4",
       "liveUrl": "https://pub-2ebc7f4f20ce4f678a9dc932b1f9830e.r2.dev/downloads/Aiko-0.1.1-alpha-arm64.dmg",
       "liveLabel": "Download for macOS",
       "githubUrl": null,
@@ -261,7 +257,7 @@
       "repo": "",
       "title": "Train Shade Seat",
       "description": "Recommends which side of a train will get less direct sun, based on the line, direction of travel, time of day, and sun position.",
-      "imageUrl": "/portfolio-new/data/project-images/train-shade-seat.jpg",
+      "imageUrl": "/data/project-images/train-shade-seat.jpg",
       "mediaUrl": null,
       "liveUrl": null,
       "liveLabel": null,

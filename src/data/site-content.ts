@@ -14,7 +14,7 @@ export const HERO_ROLE = 'Owen Santoso'
 export const HERO_TAGLINE =
   "Software engineer in Tokyo. I build small tools for problems I run into personally, and take a few apart just to see how they work."
 
-export const HERO_PHOTO_URL: string | null = '/portfolio-new/data/owen-portrait.jpg'
+export const HERO_PHOTO_URL: string | null = '/data/owen-portrait.jpg'
 
 export const ABOUT_INTRO =
   "I'm a software engineer based in Tokyo with a background in electrical and electronic engineering. Professionally I've worked across Java, Kotlin, React and SQL inside a ten-plus-year production codebase at LogicVein, shipping full-stack features and chasing down UI defects and race conditions."
@@ -27,15 +27,15 @@ export const ABOUT_CLOSING =
 export const ABOUT_MENTIONS = {
   jimoty: {
     slug: 'jmty-map-chrome-extension',
-    imageUrl: '/portfolio-new/data/project-images/jmty-map-chrome-extension.png',
+    imageUrl: '/data/project-images/jmty-map-chrome-extension.png',
   },
   spotifyTracker: {
     slug: 'spotify-playlist-tracker',
-    imageUrl: '/portfolio-new/data/project-images/spotify-playlist-tracker.png',
+    imageUrl: '/data/project-images/spotify-playlist-tracker.png',
   },
   arLyrics: {
     slug: 'ar-spotify-lyrics',
-    imageUrl: '/portfolio-new/data/AR-spotify-lyrics.png',
+    imageUrl: '/data/AR-spotify-lyrics.png',
   },
 }
 

@@ -9,7 +9,7 @@ const configPath = path.join(rootDir, 'src', 'data', 'project-config.json')
 const outputDir = path.join(rootDir, 'public', 'data')
 const imageOutputDir = path.join(outputDir, 'project-images')
 const outputPath = path.join(outputDir, 'projects-cache.json')
-const publicBasePath = '/portfolio-new/'
+const publicBasePath = '/'
 const imageUrlBase = `${publicBasePath}data/project-images/`
 
 const repoApiBase = 'https://api.github.com/repos'
