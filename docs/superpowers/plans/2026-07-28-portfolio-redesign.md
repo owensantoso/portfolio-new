@@ -8,6 +8,18 @@
 
 **Tech Stack:** React 19 + TypeScript + Vite (existing). No test framework exists in this repo (no vitest/jest) — do not add one as a side effect of this work. No new runtime dependencies needed for any task below.
 
+## Addendum (applied during implementation)
+
+Mid-implementation, Owen asked to promote Aiko Dictionary out of the hidden easter-egg mechanic into a real featured project, swapped in for Jimoty Pickup Map. This plan's tasks were written before that change; the actual implementation deviates as follows:
+
+- Task 6 (lightbox generalization), Task 12 (Hero), and Task 13 (ProjectGrid) no longer carry any `titleClickCountRef` / `isAikoUnlocked` / `animateAikoCard` / `flashNumber` / `showSixPrompt` / `showAikoFromSearch` / `showOnlyAiko` / `showAikoCard` state or props — that entire subsystem was deleted from `App.tsx` rather than threaded through the split components, since it existed solely to gate Aiko and had nothing left to gate once Aiko became a normal project.
+- `Hero.tsx` has no `onTitleClick` prop; the title is a plain (non-interactive) heading.
+- `ProjectGrid.tsx` has no special-cased Aiko `<article>` block or `aikoImageUrl` prop; Aiko flows through the normal per-project map like everything else, sourced from `project-config.json`.
+- Task 1/2 data changes additionally include a new `aiko-dictionary` entry (not just `train-shade-seat`), and `jmty-map-chrome-extension` was left without `featured`/`status` fields (not marked featured).
+- Dead CSS tied to the removed subsystem (`.easter-egg-card*`, `.number-flash*`, `.search-omen*`, `.project-grid-reveal`, `.project-grid-solo`, `.project-card-fading`, `.card-fallaway`, `.reveal-haze`, `.title-trigger`, `.download-link`) was removed from `App.css` rather than kept.
+
+Everything else in this plan (schema, cache generator passthrough, design tokens, site-content module, MediaThumbnail, Featured/About/Experience/Skills/Footer components, tag-filter chips, metadata/résumé task) was implemented as written.
+
 ## Global Constraints
 
 - No dark mode (not a priority per spec).

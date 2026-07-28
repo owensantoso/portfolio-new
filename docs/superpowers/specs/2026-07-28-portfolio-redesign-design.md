@@ -58,6 +58,15 @@ No "open to work" badge in the hero — kept understated per the brief's anti-co
 
 **Footer:** Email, GitHub, LinkedIn, Résumé, "Tokyo, Japan", small copyright line. No "Built with React" badge.
 
+## Addendum (post-approval change)
+
+Mid-implementation, Owen asked to drop Aiko Dictionary from being a hidden click-counter/search-omen easter egg and make it a real, always-visible featured project instead, swapped in for Jimoty Pickup Map. Implemented as:
+
+- Removed the entire title-click-counter, number-flash, and "6"/"67" search-omen subsystem from `App.tsx` (it existed only to gate Aiko; with Aiko always visible it had nothing left to gate).
+- Added `aiko-dictionary` as a normal entry in `project-config.json` (description: "A macOS dictionary app for Japanese learners, currently an early alpha build," using the existing `aiko.png` image and R2-hosted `.dmg` download link).
+- `FEATURED_ORDER` is now `['ar-spotify-lyrics', 'aiko-dictionary', 'train-shade-seat']`. Jimoty Pickup Map is no longer featured but stays in the regular All-projects grid unchanged.
+- The image-click lightbox still exists (generalized to support video per the Media hover/click section below) but is no longer tied to any unlock mechanic — every project's media just opens the lightbox directly.
+
 ## Featured projects (3, more space/detail than grid cards)
 
 1. **AR Spotify Lyrics** — status: prototype. Real data already in `projects-cache.json:167-182`: "A personal MentraOS app that shows Spotify lyrics on Even Realities G1 glasses, with optional Chinese/Japanese/Korean romanization and live per-user settings." Has image + GitHub repo, no live URL (expected — wearable app, not web-hosted).
