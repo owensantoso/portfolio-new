@@ -18,6 +18,13 @@
   --chip: rgba(240, 243, 236, 0.9);
   --border: rgba(36, 49, 38, 0.12);
   --border-strong: rgba(36, 49, 38, 0.22);
+  --accent-hanko: #b23a2e;
+  --tape: rgba(178, 58, 46, 0.1);
+  --status-live: #3f8f5f;
+  --status-prototype: #b8862c;
+  --status-dev: #8a8f86;
+  --photo-frame-bg: #fffcf4;
+  --photo-frame-shadow: 0 10px 24px rgba(36, 49, 38, 0.18);
 }
 
 * {
