@@ -1,3 +1,5 @@
+export type ProjectStatus = 'live' | 'prototype' | 'in-development'
+
 export type ProjectConfig = {
   slug: string
   repo?: string
@@ -7,8 +9,11 @@ export type ProjectConfig = {
   title?: string
   description?: string
   imageUrl?: string
+  mediaUrl?: string
   tags?: string[]
   sortOrder?: number
+  featured?: boolean
+  status?: ProjectStatus
 }
 
 export type ProjectCardData = {
@@ -17,11 +22,14 @@ export type ProjectCardData = {
   title: string
   description: string
   imageUrl: string | null
+  mediaUrl: string | null
   liveUrl: string | null
   liveLabel: string | null
   githubUrl: string | null
   tags: string[]
   sortOrder: number
+  featured: boolean
+  status: ProjectStatus | null
   sourceStatus: 'ok' | 'error'
 }
 

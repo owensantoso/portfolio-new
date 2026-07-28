@@ -195,11 +195,14 @@ async function resolveProject(project) {
         project.description ??
         'A recent project with details maintained directly in this portfolio.',
       imageUrl: project.imageUrl ?? null,
+      mediaUrl: project.mediaUrl ?? null,
       liveUrl: project.liveUrl ?? null,
       liveLabel: project.liveLabel ?? null,
       githubUrl: project.githubUrl ?? null,
       tags: project.tags ?? [],
       sortOrder: project.sortOrder ?? 999,
+      featured: project.featured ?? false,
+      status: project.status ?? null,
       sourceStatus: 'ok',
     }
   }
@@ -226,11 +229,14 @@ async function resolveProject(project) {
           payload.description ??
           'A recent project with details pulled from GitHub when available.',
         imageUrl: null,
+        mediaUrl: project.mediaUrl ?? null,
         liveUrl: project.liveUrl ?? payload.homepage ?? null,
         liveLabel: project.liveLabel ?? null,
         githubUrl: project.githubUrl ?? payload.html_url,
         tags: project.tags ?? [],
         sortOrder: project.sortOrder ?? 999,
+        featured: project.featured ?? false,
+        status: project.status ?? null,
         sourceStatus: 'error',
         fetchError: imageError instanceof Error ? imageError.message : String(imageError),
       }
@@ -245,11 +251,14 @@ async function resolveProject(project) {
         payload.description ??
         'A recent project with details pulled from GitHub when available.',
       imageUrl,
+      mediaUrl: project.mediaUrl ?? null,
       liveUrl: project.liveUrl ?? payload.homepage ?? null,
       liveLabel: project.liveLabel ?? null,
       githubUrl: project.githubUrl ?? payload.html_url,
       tags: project.tags ?? [],
       sortOrder: project.sortOrder ?? 999,
+      featured: project.featured ?? false,
+      status: project.status ?? null,
       sourceStatus: 'ok',
     }
   } catch (error) {
@@ -259,11 +268,14 @@ async function resolveProject(project) {
       title: project.title ?? repoNameToTitle(project.repo),
       description: project.description ?? 'Project details unavailable.',
       imageUrl: project.imageUrl ?? null,
+      mediaUrl: project.mediaUrl ?? null,
       liveUrl: project.liveUrl ?? null,
       liveLabel: project.liveLabel ?? null,
       githubUrl: project.githubUrl ?? `https://github.com/${project.repo}`,
       tags: project.tags ?? [],
       sortOrder: project.sortOrder ?? 999,
+      featured: project.featured ?? false,
+      status: project.status ?? null,
       sourceStatus: 'error',
       fetchError: error instanceof Error ? error.message : String(error),
     }

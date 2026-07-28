@@ -83,12 +83,37 @@
     "title": "AR Spotify Lyrics",
     "imageUrl": "/portfolio-new/data/AR-spotify-lyrics.png",
     "tags": ["Wearables", "Spotify"],
-    "sortOrder": 11
+    "sortOrder": 11,
+    "featured": true,
+    "status": "prototype"
   },
   {
     "slug": "big2-helper",
     "repo": "owensantoso/big2-helper",
     "tags": ["Card game", "Utility"],
     "sortOrder": 12
+  },
+  {
+    "slug": "aiko-dictionary",
+    "repo": "",
+    "title": "Aiko Dictionary",
+    "description": "A macOS dictionary app for Japanese learners, currently an early alpha build.",
+    "imageUrl": "/portfolio-new/data/aiko.png",
+    "liveUrl": "https://pub-2ebc7f4f20ce4f678a9dc932b1f9830e.r2.dev/downloads/Aiko-0.1.1-alpha-arm64.dmg",
+    "liveLabel": "Download for macOS",
+    "tags": ["Japanese", "Language learning", "macOS"],
+    "sortOrder": 13,
+    "featured": true,
+    "status": "prototype"
+  },
+  {
+    "slug": "train-shade-seat",
+    "repo": "",
+    "title": "Train Shade Seat",
+    "description": "Recommends which side of a train will get less direct sun, based on the line, direction of travel, time of day, and sun position.",
+    "tags": ["Maps", "Experiment"],
+    "sortOrder": 14,
+    "featured": true,
+    "status": "in-development"
   }
 ]
