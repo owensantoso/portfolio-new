@@ -25,6 +25,15 @@
   --status-dev: #8a8f86;
   --photo-frame-bg: #fffcf4;
   --photo-frame-shadow: 0 10px 24px rgba(36, 49, 38, 0.18);
+
+  /* Frosted paper: warm-tinted rather than neutral, so it reads as part of the
+     ivory palette instead of a transplanted iOS panel. Used by the site nav,
+     section rail, prose previews, and lightbox chrome. */
+  --glass: rgba(252, 246, 233, 0.74);
+  --glass-strong: rgba(252, 246, 233, 0.92);
+  --glass-border: rgba(35, 33, 49, 0.1);
+  --glass-blur: saturate(150%) blur(14px);
+  --glass-shadow: 0 8px 28px rgba(35, 33, 49, 0.08);
 }
 
 * {

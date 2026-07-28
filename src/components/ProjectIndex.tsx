@@ -2,6 +2,7 @@ import './ProjectIndex.css'
 import type { ProjectCardData } from '../lib/projects'
 import { PROJECT_CATEGORIES } from '../data/site-content'
 import { CategoryIcon } from './CategoryIcon'
+import { LinkIcon, type LinkIconName } from './LinkIcon'
 import { MediaThumbnail, type MediaSelection } from './MediaThumbnail'
 
 type ProjectIndexProps = {
@@ -22,6 +23,17 @@ const STATUS_LABEL: Record<string, string> = {
   live: 'Live',
   prototype: 'Prototype',
   'in-development': 'In development',
+}
+
+/** The primary link is not always a website, so let its label pick the icon. */
+function primaryLinkIcon(label: string): LinkIconName {
+  const normalized = label.toLowerCase()
+
+  if (normalized.includes('download')) return 'download'
+  if (normalized.includes('store')) return 'store'
+  if (normalized.includes('case study')) return 'resume'
+
+  return 'external'
 }
 
 export function ProjectIndex({
@@ -145,12 +157,14 @@ export function ProjectIndex({
 
             <div className="index-links">
               {project.liveUrl ? (
-                <a href={project.liveUrl} target="_blank" rel="noreferrer">
+                <a className="index-link index-link-primary" href={project.liveUrl} target="_blank" rel="noreferrer">
+                  <LinkIcon name={primaryLinkIcon(project.liveLabel ?? 'Open')} />
                   {project.liveLabel ?? 'Open'}
                 </a>
               ) : null}
               {project.githubUrl ? (
-                <a href={project.githubUrl} target="_blank" rel="noreferrer">
+                <a className="index-link" href={project.githubUrl} target="_blank" rel="noreferrer">
+                  <LinkIcon name="github" />
                   Source
                 </a>
               ) : null}

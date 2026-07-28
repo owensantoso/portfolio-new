@@ -1,6 +1,6 @@
 import type { ReactElement } from 'react'
 
-export type LinkIconName = 'github' | 'linkedin' | 'resume' | 'email'
+export type LinkIconName = 'github' | 'linkedin' | 'resume' | 'email' | 'external' | 'download' | 'store'
 
 const SHARED = {
   width: 14,
@@ -49,6 +49,47 @@ const ICONS: Record<LinkIconName, ReactElement> = {
     >
       <rect x="2.5" y="4.5" width="19" height="15" rx="2" />
       <path d="m3.5 6.5 8.5 5.5 8.5-5.5" />
+    </svg>
+  ),
+  external: (
+    <svg
+      {...SHARED}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M13.5 4.5h6v6" />
+      <path d="M19.5 4.5 11 13" />
+      <path d="M18 14.5v3a2 2 0 0 1-2 2H6.5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3" />
+    </svg>
+  ),
+  download: (
+    <svg
+      {...SHARED}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 4v10" />
+      <path d="m7.5 10 4.5 4.5L16.5 10" />
+      <path d="M4.5 19.5h15" />
+    </svg>
+  ),
+  store: (
+    <svg
+      {...SHARED}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M4 8h16l-1.2 11a2 2 0 0 1-2 1.8H7.2a2 2 0 0 1-2-1.8z" />
+      <path d="M8.5 8V6.5a3.5 3.5 0 0 1 7 0V8" />
     </svg>
   ),
 }

@@ -1,0 +1,124 @@
+.site-nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 15;
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.site-nav-inner {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  width: min(1120px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 15px 0;
+}
+
+.site-nav-brand {
+  color: var(--accent-hanko);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.76rem;
+  font-weight: 600;
+  flex: 0 0 auto;
+}
+
+/* The section name slides up into the bar as its heading scrolls out of view,
+   so the bar reports where you are without a second row of links. */
+.site-nav-section {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
+}
+
+.site-nav-section[data-shown='true'] {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.site-nav-slash {
+  color: var(--muted);
+  opacity: 0.5;
+  font-size: 0.76rem;
+}
+
+.site-nav-section-label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: site-nav-label-in 280ms ease both;
+}
+
+@keyframes site-nav-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.site-nav-pages {
+  display: flex;
+  gap: 22px;
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+.site-nav-pages a {
+  color: var(--muted);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-size: 0.74rem;
+  padding-bottom: 3px;
+  border-bottom: 1px solid transparent;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.site-nav-pages a:hover {
+  color: var(--ink);
+}
+
+.site-nav-pages a[data-current='true'] {
+  color: var(--accent-hanko);
+  border-bottom-color: var(--accent-hanko);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-nav-section,
+  .site-nav-section-label {
+    transition: none;
+    animation: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .site-nav-section {
+    display: none;
+  }
+
+  .site-nav-pages {
+    gap: 16px;
+  }
+}

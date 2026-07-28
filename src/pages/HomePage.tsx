@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import '../App.css'
 import { useProjects } from '../lib/useProjects'
+import { useActiveSection } from '../lib/useActiveSection'
 import { PROJECTS_URL } from '../data/site-content'
 import { Hero } from '../components/Hero'
 import { Featured } from '../components/Featured'
@@ -8,11 +9,13 @@ import { About } from '../components/About'
 import { Experience } from '../components/Experience'
 import { Skills } from '../components/Skills'
 import { Footer } from '../components/Footer'
-import { SectionNav } from '../components/SectionNav'
+import { SiteNav, type NavSection } from '../components/SiteNav'
+import { SectionRail } from '../components/SectionRail'
 import { MediaLightbox } from '../components/MediaLightbox'
 import { type MediaSelection } from '../components/MediaThumbnail'
 
-const HOME_SECTIONS = [
+// Module scope keeps the identity stable, so the observer is not rebuilt per render.
+const HOME_SECTIONS: NavSection[] = [
   { id: 'featured', label: 'Featured' },
   { id: 'about', label: 'About' },
   { id: 'experience', label: 'Experience' },
@@ -22,10 +25,14 @@ const HOME_SECTIONS = [
 export function HomePage() {
   const { projects } = useProjects()
   const [selectedMedia, setSelectedMedia] = useState<MediaSelection | null>(null)
+  const activeId = useActiveSection(HOME_SECTIONS)
+
+  const activeLabel = HOME_SECTIONS.find((section) => section.id === activeId)?.label ?? null
 
   return (
     <>
-      <SectionNav sections={HOME_SECTIONS} />
+      <SiteNav page="home" sectionLabel={activeLabel} />
+      <SectionRail sections={HOME_SECTIONS} activeId={activeId} />
 
       <main className="page-shell">
         <Hero />

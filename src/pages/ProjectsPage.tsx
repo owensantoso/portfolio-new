@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import '../App.css'
 import { useProjects } from '../lib/useProjects'
-import { HOME_URL, PROJECT_CATEGORIES } from '../data/site-content'
+import { PROJECT_CATEGORIES } from '../data/site-content'
 import { ProjectIndex } from '../components/ProjectIndex'
+import { SiteNav } from '../components/SiteNav'
 import { Footer } from '../components/Footer'
 import { MediaLightbox } from '../components/MediaLightbox'
 import { type MediaSelection } from '../components/MediaThumbnail'
@@ -69,31 +70,31 @@ export function ProjectsPage() {
   }
 
   return (
-    <main className="page-shell">
-      <p className="page-back">
-        <a href={HOME_URL}>Owen Santoso</a>
-      </p>
+    <>
+      <SiteNav page="projects" />
 
-      <ProjectIndex
-        isLoading={isLoading}
-        error={error}
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
-        activeTags={activeTags}
-        onToggleTag={handleToggleTag}
-        onClearFilters={() => {
-          setSearchQuery('')
-          setActiveTags([])
-        }}
-        filteredProjects={filteredProjects}
-        totalCount={projects.length}
-        onOpenMedia={setSelectedMedia}
-        highlightedSlug={highlightedSlug}
-      />
+      <main className="page-shell">
+        <ProjectIndex
+          isLoading={isLoading}
+          error={error}
+          searchQuery={searchQuery}
+          onSearchQueryChange={setSearchQuery}
+          activeTags={activeTags}
+          onToggleTag={handleToggleTag}
+          onClearFilters={() => {
+            setSearchQuery('')
+            setActiveTags([])
+          }}
+          filteredProjects={filteredProjects}
+          totalCount={projects.length}
+          onOpenMedia={setSelectedMedia}
+          highlightedSlug={highlightedSlug}
+        />
 
-      <Footer />
+        <Footer />
 
-      <MediaLightbox media={selectedMedia} onClose={() => setSelectedMedia(null)} />
-    </main>
+        <MediaLightbox media={selectedMedia} onClose={() => setSelectedMedia(null)} />
+      </main>
+    </>
   )
 }

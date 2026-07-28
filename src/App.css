@@ -1,7 +1,8 @@
 .page-shell {
   width: min(1120px, calc(100% - 40px));
   margin: 0 auto;
-  padding: 48px 0 72px;
+  /* Top padding clears the fixed site nav. */
+  padding: 84px 0 72px;
 }
 
 .hero {
@@ -221,7 +222,9 @@
   aspect-ratio: 16 / 10;
   border-radius: 12px;
   overflow: clip;
-  border: 1px solid var(--border);
+  padding: 4px;
+  border: 1px solid var(--glass-border);
+  backdrop-filter: var(--glass-blur);
   box-shadow: 0 20px 45px rgba(35, 33, 49, 0.22);
   opacity: 0;
   visibility: hidden;
@@ -239,6 +242,7 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 9px;
 }
 
 .project-mention:hover .project-mention-preview,
@@ -553,30 +557,6 @@
   transform: translateX(3px);
 }
 
-.page-back {
-  margin: 0 0 26px;
-}
-
-.page-back a {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.5em;
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.86rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  transition: color 160ms ease;
-}
-
-.page-back a::before {
-  content: '←';
-}
-
-.page-back a:hover {
-  color: var(--accent-hanko);
-}
-
 .site-footer {
   display: flex;
   flex-direction: column;
@@ -644,9 +624,15 @@
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 999px;
   padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: var(--glass-blur);
   color: white;
   cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .lightbox-image {

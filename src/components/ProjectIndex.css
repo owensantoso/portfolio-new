@@ -166,25 +166,49 @@
 .index-links {
   display: grid;
   gap: 8px;
-  justify-items: end;
-  text-align: right;
+  justify-items: stretch;
 }
 
-.index-links a {
-  color: var(--ink);
+/* Frosted pills rather than bare underlined words: they read as the row's actions
+   and match the nav and rail treatment. */
+.index-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  color: var(--muted);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
   white-space: nowrap;
-  border-bottom: 1px solid var(--border-strong);
-  padding-bottom: 1px;
   transition:
     color 160ms ease,
-    border-color 160ms ease;
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
 }
 
-.index-links a:hover {
+.index-link svg {
+  flex: 0 0 auto;
+  opacity: 0.75;
+}
+
+.index-link:hover {
   color: var(--accent-hanko);
-  border-bottom-color: var(--accent-hanko);
+  border-color: var(--accent-hanko);
+  background: var(--glass-strong);
+  transform: translateY(-1px);
+}
+
+.index-link:hover svg {
+  opacity: 1;
+}
+
+.index-link-primary {
+  color: var(--ink);
 }
 
 .tag-filter-chip {
@@ -214,10 +238,8 @@
 
   .index-links {
     grid-column: 2;
-    justify-items: start;
-    text-align: left;
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 8px;
   }
 }
