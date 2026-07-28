@@ -105,13 +105,12 @@ function App() {
       return bySearch
     }
 
-    const activeSlugs = new Set(
-      PROJECT_CATEGORIES.filter((category) => activeTags.includes(category.label)).flatMap(
-        (category) => category.slugs,
-      ),
-    )
+    // AND, not OR: each extra chip narrows the list instead of widening it.
+    const activeCategories = PROJECT_CATEGORIES.filter((category) => activeTags.includes(category.label))
 
-    return bySearch.filter((project) => activeSlugs.has(project.slug))
+    return bySearch.filter((project) =>
+      activeCategories.every((category) => category.slugs.includes(project.slug)),
+    )
   }, [projectCards, searchQuery, activeTags])
 
   function handleToggleTag(tag: string) {

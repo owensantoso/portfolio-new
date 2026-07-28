@@ -69,7 +69,8 @@
 .hero-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px 24px;
+  margin-top: 4px;
 }
 
 .search-row {
@@ -101,30 +102,53 @@
 .profile-link {
   width: fit-content;
   display: inline-flex;
-  align-items: center;
-  padding: 0.8rem 1.1rem;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  align-items: baseline;
+  gap: 0.5em;
+  padding: 0.35rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--border-strong);
   color: var(--ink);
-  background: var(--surface);
+  background: none;
   text-decoration: none;
+  font-size: 0.94rem;
+  letter-spacing: 0.02em;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.profile-link::after {
+  content: '↗';
+  font-size: 0.78em;
+  color: var(--muted);
   transition:
     transform 160ms ease,
-    border-color 160ms ease,
-    background 160ms ease,
-    box-shadow 160ms ease;
+    color 160ms ease;
 }
 
 .profile-link:hover {
-  transform: translateY(-1px);
   border-color: var(--accent-hanko);
-  background: var(--tape);
-  box-shadow: 0 14px 30px rgba(178, 58, 46, 0.14);
+  color: var(--accent-hanko);
 }
 
+.profile-link:hover::after {
+  color: var(--accent-hanko);
+  transform: translate(2px, -2px);
+}
+
+/* "View projects" jumps down the page rather than out of it. */
 .profile-link:first-child {
   border-color: var(--accent-hanko);
   color: var(--accent-hanko);
+}
+
+.profile-link:first-child::after {
+  content: '↓';
+  color: var(--accent-hanko);
+}
+
+.profile-link:first-child:hover::after {
+  transform: translateY(2px);
 }
 
 .tag-filter-row {
@@ -513,11 +537,6 @@
   font-size: 0.86rem;
   line-height: 1.1;
   white-space: nowrap;
-  transform: rotate(-1deg);
-}
-
-.tag-list li:nth-child(even) {
-  transform: rotate(1deg);
 }
 
 .project-links {
