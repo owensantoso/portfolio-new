@@ -33,6 +33,8 @@
     "slug": "jmty-map-chrome-extension",
     "repo": "owensantoso/jmty-map-chrome-extension",
     "title": "Jimoty Pickup Map",
+    "liveUrl": "https://chromewebstore.google.com/detail/jimoty-pickup-map/fpjalenbgdfpaghclllcilcaolphcjdo",
+    "liveLabel": "Chrome Web Store",
     "tags": ["Chrome extension", "Maps"],
     "sortOrder": 5
   },
@@ -109,10 +111,11 @@
   },
   {
     "slug": "train-shade-seat",
-    "repo": "",
+    "repo": "owensantoso/tokyo-train-shade-side",
     "title": "Train Shade Seat",
     "description": "Recommends which side of a train will get less direct sun, based on the line, direction of travel, time of day, and sun position.",
     "imageUrl": "/data/project-images/train-shade-seat.jpg",
+    "liveUrl": "http://shadeseat.owensantoso.com/",
     "tags": ["Maps", "Experiment"],
     "sortOrder": 14,
     "featured": true,

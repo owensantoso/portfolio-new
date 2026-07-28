@@ -1,4 +1,4 @@
-import { CONTACT, HERO_PHOTO_URL, HERO_ROLE, HERO_TAGLINE } from '../data/site-content'
+import { CONTACT, HERO_ROLE, HERO_TAGLINE } from '../data/site-content'
 import { LinkIcon } from './LinkIcon'
 
 export function Hero() {
@@ -8,16 +8,11 @@ export function Hero() {
         toso <span className="eyebrow-location">· {CONTACT.location}</span>
       </p>
       <div className="hero-main">
-        {HERO_PHOTO_URL ? (
-          <div className="hero-photo-frame">
-            <img className="hero-photo" src={HERO_PHOTO_URL} alt={HERO_ROLE} />
-          </div>
-        ) : null}
         <div className="hero-copy-block">
           <h1>{HERO_ROLE}</h1>
           <p className="hero-copy">{HERO_TAGLINE}</p>
           <div className="hero-buttons">
-            <a className="profile-link" href="#projects">
+            <a className="profile-link" href="#featured">
               View projects
             </a>
             <a className="profile-link" href={CONTACT.github} target="_blank" rel="noreferrer">

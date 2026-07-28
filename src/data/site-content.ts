@@ -22,6 +22,30 @@ export const ABOUT_INTRO =
 export const ABOUT_CLOSING =
   "I like projects that force me to connect things that weren't built to talk to each other. Native English, JLPT N2 Japanese."
 
+export type AboutAsideFact = {
+  label: string
+  value: string
+}
+
+export const ABOUT_ASIDE_FACTS: AboutAsideFact[] = [
+  { label: 'Base', value: 'Tokyo, Japan' },
+  { label: 'Focus', value: 'Full-stack, audio, maps, BLE' },
+  { label: 'Languages', value: 'Native English, JLPT N2 Japanese' },
+]
+
+export type InterestChip = {
+  emoji: string
+  label: string
+  slot: 'top-left' | 'top-right' | 'mid-right' | 'bottom-left'
+}
+
+export const INTEREST_CHIPS: InterestChip[] = [
+  { emoji: '📷', label: 'Fujifilm', slot: 'top-left' },
+  { emoji: '🎹', label: 'Piano', slot: 'top-right' },
+  { emoji: '🎸', label: 'Guitar', slot: 'mid-right' },
+  { emoji: '🏐', label: 'Volleyball', slot: 'bottom-left' },
+]
+
 // Slugs referenced inline in About.tsx's second paragraph. Image paths mirror
 // what's already in project-config.json for these three projects.
 export const ABOUT_MENTIONS = {
@@ -41,6 +65,8 @@ export const ABOUT_MENTIONS = {
 
 export type ExperienceEntry = {
   company: string
+  companyMark: string
+  companyUrl: string
   role: string
   dates: string
   bullets: string[]
@@ -49,6 +75,8 @@ export type ExperienceEntry = {
 export const EXPERIENCE: ExperienceEntry[] = [
   {
     company: 'LogicVein',
+    companyMark: 'LV',
+    companyUrl: 'https://logicvein.com/',
     role: 'Software Engineer',
     dates: 'Mar 2025 – Oct 2025',
     bullets: [
@@ -59,6 +87,8 @@ export const EXPERIENCE: ExperienceEntry[] = [
   },
   {
     company: 'Jacobs Engineering',
+    companyMark: 'J',
+    companyUrl: 'https://www.jacobs.com/',
     role: 'Electrical Engineering Intern',
     dates: 'Nov 2022 – Feb 2024',
     bullets: [
@@ -68,11 +98,55 @@ export const EXPERIENCE: ExperienceEntry[] = [
   },
   {
     company: 'exida',
+    companyMark: 'ex',
+    companyUrl: 'https://www.exida.com/',
     role: 'Engineering Risk Intern',
     dates: 'Nov 2021 – Feb 2022',
     bullets: [
       'Wrote Python automation that cut down the safety-certificate creation process',
       'Supported IEC 61508/61511 safety training material for Rio Tinto',
+    ],
+  },
+]
+
+export type EducationEntry = {
+  degree: string
+  emphasis: string
+  dates: string
+  bullets: string[]
+}
+
+export type EducationInstitution = {
+  school: string
+  dates: string
+  entries: EducationEntry[]
+}
+
+export const EDUCATION: EducationInstitution[] = [
+  {
+    school: 'The University of Western Australia',
+    dates: '2018 – 2023',
+    entries: [
+      {
+        degree: 'Master of Professional Engineering',
+        emphasis: 'Electrical and Electronic Engineering',
+        dates: '2018 – 2023',
+        bullets: [
+          '6.7/7.0 GPA · 82.9 WAM',
+          'UWA Engineering Scholarship',
+          'Competed in the WA Volleyball League with the UWA Volleyball Club',
+        ],
+      },
+      {
+        degree: 'Bachelor of Philosophy (First Class Hons)',
+        emphasis: 'Computer Science and Engineering',
+        dates: '2018 – 2023',
+        bullets: [
+          '6.9/7.0 GPA · 86.7 WAM',
+          'Studied abroad at Kwansei Gakuin University in Nishinomiya, Japan',
+          'Honours thesis explored deep learning for audio super-resolution',
+        ],
+      },
     ],
   },
 ]
@@ -201,3 +275,31 @@ export const PROJECT_CATEGORIES: ProjectCategory[] = [
 ]
 
 export const FEATURED_ORDER = ['ar-spotify-lyrics', 'aiko-dictionary', 'train-shade-seat']
+
+export type FeaturedGroup = {
+  title: string
+  description: string
+  theme: 'hardware' | 'language' | 'play'
+  slugs: string[]
+}
+
+export const FEATURED_GROUPS: FeaturedGroup[] = [
+  {
+    title: 'Hardware-adjacent',
+    description: 'BLE experiments, wearables, and side projects that brush up against real devices.',
+    theme: 'hardware',
+    slugs: ['ar-spotify-lyrics', 'switchbot-tools', 'xgimi-elfin-ble-wake'],
+  },
+  {
+    title: 'Japanese & language',
+    description: 'Tools shaped by living in Japan: subtitles, lookup flows, lyrics, and everyday friction.',
+    theme: 'language',
+    slugs: ['aiko-dictionary', 'subtitle-companion-mvp', 'guitar-chord-companion', 'jmty-map-chrome-extension'],
+  },
+  {
+    title: 'Fun stuff',
+    description: 'Smaller experiments and hobby projects with a bit more playfulness to them.',
+    theme: 'play',
+    slugs: ['train-shade-seat', 'vgm-recordings-browser', 'guitar-note-visualizer', 'big2-helper'],
+  },
+]

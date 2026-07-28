@@ -7,6 +7,7 @@ import { Hero } from '../components/Hero'
 import { Featured } from '../components/Featured'
 import { About } from '../components/About'
 import { Experience } from '../components/Experience'
+import { Education } from '../components/Education'
 import { Skills } from '../components/Skills'
 import { Footer } from '../components/Footer'
 import { SiteNav, type NavSection } from '../components/SiteNav'
@@ -19,6 +20,7 @@ const HOME_SECTIONS: NavSection[] = [
   { id: 'featured', label: 'Featured' },
   { id: 'about', label: 'About' },
   { id: 'experience', label: 'Experience' },
+  { id: 'education', label: 'Education' },
   { id: 'skills', label: 'Skills' },
 ]
 
@@ -42,6 +44,8 @@ export function HomePage() {
         <About />
 
         <Experience />
+
+        <Education />
 
         <Skills />
 

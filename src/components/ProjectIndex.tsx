@@ -163,8 +163,8 @@ export function ProjectIndex({
                   target="_blank"
                   rel="noreferrer"
                 >
-                  <LinkIcon name={primaryLinkIcon(project.liveLabel ?? 'Open')} />
-                  {project.liveLabel ?? 'Open'}
+                  <LinkIcon name={primaryLinkIcon(project.liveLabel ?? 'Website')} />
+                  {project.liveLabel ?? 'Website'}
                 </a>
               ) : null}
               {project.githubUrl ? (

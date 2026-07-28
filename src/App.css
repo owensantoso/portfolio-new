@@ -37,28 +37,6 @@
   flex-wrap: wrap;
 }
 
-.hero-photo-frame {
-  flex: 0 0 auto;
-  width: 132px;
-  padding: 8px 8px 20px;
-  background: var(--photo-frame-bg);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  box-shadow: var(--photo-frame-shadow);
-  transform: rotate(-2deg);
-}
-
-.hero-photo {
-  display: block;
-  width: 100%;
-  /* Square crop with the framing pushed toward the subject: the source is a wide
-     scenic shot, so a full 3:4 view would render the face only a few pixels tall. */
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  object-position: 64% 30%;
-  border-radius: 2px;
-}
-
 .hero-copy-block {
   display: grid;
   gap: 18px;
@@ -186,20 +164,178 @@
 .featured-section,
 .about-section,
 .experience-section,
+.education-section,
 .skills-section {
   scroll-margin-top: 80px;
 }
 
 .about-section {
   display: grid;
-  gap: 16px;
+  gap: 24px;
   padding: 40px 0;
   border-top: 1px solid var(--border);
-  max-width: 62ch;
 }
 
-.about-section p {
+.about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.72fr);
+  gap: 30px 48px;
+  align-items: start;
+}
+
+.about-copy {
+  display: grid;
+  gap: 22px;
+  max-width: 64ch;
+}
+
+.about-section p,
+.about-fact dd {
   line-height: 1.65;
+}
+
+.about-aside {
+  display: grid;
+  gap: 18px;
+  justify-items: end;
+}
+
+.about-polaroid-cluster {
+  position: relative;
+  width: min(100%, 292px);
+  min-height: 346px;
+}
+
+.about-polaroid {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 10px 10px 24px;
+  background: var(--photo-frame-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  box-shadow: var(--photo-frame-shadow);
+  transform: rotate(3deg) translateY(0);
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.about-polaroid-cluster:hover .about-polaroid {
+  transform: rotate(1.5deg) translateY(-4px);
+  box-shadow: 0 18px 34px rgba(36, 49, 38, 0.22);
+}
+
+.about-polaroid-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: 64% 30%;
+  border-radius: 2px;
+}
+
+.about-interest-chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.about-interest-chip {
+  position: absolute;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.45rem 0.76rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  background: var(--glass-strong);
+  box-shadow: var(--glass-shadow);
+  color: var(--ink);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  opacity: 0.74;
+  transition:
+    transform 220ms ease,
+    opacity 220ms ease;
+}
+
+.about-interest-chip span:first-child {
+  font-size: 1rem;
+}
+
+.about-interest-chip[data-slot='top-left'] {
+  top: 22px;
+  left: -4px;
+  transform: translate(12px, 10px) rotate(-8deg);
+}
+
+.about-interest-chip[data-slot='top-right'] {
+  top: 14px;
+  right: -6px;
+  transform: translate(-12px, 12px) rotate(8deg);
+}
+
+.about-interest-chip[data-slot='mid-right'] {
+  top: 46%;
+  right: -10px;
+  transform: translate(-10px, -50%) rotate(5deg);
+}
+
+.about-interest-chip[data-slot='bottom-left'] {
+  bottom: 20px;
+  left: -6px;
+  transform: translate(14px, -8px) rotate(-7deg);
+}
+
+.about-polaroid-cluster:hover .about-interest-chip {
+  opacity: 1;
+}
+
+.about-polaroid-cluster:hover .about-interest-chip[data-slot='top-left'] {
+  transform: translate(-10px, -10px) rotate(-11deg);
+}
+
+.about-polaroid-cluster:hover .about-interest-chip[data-slot='top-right'] {
+  transform: translate(6px, -6px) rotate(10deg);
+}
+
+.about-polaroid-cluster:hover .about-interest-chip[data-slot='mid-right'] {
+  transform: translate(18px, -50%) rotate(7deg);
+}
+
+.about-polaroid-cluster:hover .about-interest-chip[data-slot='bottom-left'] {
+  transform: translate(-4px, 10px) rotate(-9deg);
+}
+
+.about-facts {
+  width: min(100%, 320px);
+  margin: 0;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(255, 252, 246, 0.78);
+  box-shadow: var(--glass-shadow);
+  display: grid;
+  gap: 14px;
+}
+
+.about-fact {
+  display: grid;
+  gap: 5px;
+}
+
+.about-fact dt {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.7rem;
+}
+
+.about-fact dd {
+  margin: 0;
+  color: var(--ink-soft);
 }
 
 .project-mention {
@@ -282,6 +418,44 @@
   font-weight: 400;
 }
 
+.experience-title-block {
+  display: grid;
+  gap: 8px;
+}
+
+.experience-company-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: fit-content;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.experience-company-link:hover {
+  color: var(--accent-hanko);
+}
+
+.experience-company-mark {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  background: var(--glass);
+  color: var(--accent-hanko);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.experience-role {
+  color: var(--ink-soft);
+}
+
 .experience-dates {
   margin: 0;
   color: var(--muted);
@@ -291,6 +465,82 @@
 
 .experience-bullets {
   margin: 10px 0 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.education-section {
+  padding: 40px 0;
+  border-top: 1px solid var(--border);
+}
+
+.education-stack {
+  margin-top: 20px;
+  display: grid;
+  gap: 18px;
+}
+
+.education-card {
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: rgba(255, 252, 246, 0.8);
+  box-shadow: var(--glass-shadow);
+}
+
+.education-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.education-header h3,
+.education-entry h4 {
+  margin: 0;
+}
+
+.education-dates,
+.education-entry-dates {
+  color: var(--muted);
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+
+.education-entries {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.education-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.education-entry:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.education-entry-heading {
+  display: grid;
+  gap: 5px;
+}
+
+.education-entry-heading p {
+  color: var(--ink-soft);
+}
+
+.education-bullets {
+  grid-column: 1 / -1;
+  margin: 0;
   padding-left: 1.2em;
   display: grid;
   gap: 6px;
@@ -671,14 +921,56 @@
     flex-direction: column;
   }
 
-  .hero-photo-frame {
-    width: 108px;
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .about-aside {
+    justify-items: start;
+  }
+
+  .about-polaroid-cluster {
+    width: min(100%, 244px);
+    min-height: 302px;
+  }
+
+  .about-interest-chip {
+    font-size: 0.76rem;
+  }
+
+  .about-interest-chip[data-slot='top-left'] {
+    transform: translate(8px, 10px) rotate(-8deg);
+  }
+
+  .about-interest-chip[data-slot='top-right'] {
+    transform: translate(-8px, 10px) rotate(8deg);
+  }
+
+  .about-interest-chip[data-slot='mid-right'] {
+    transform: translate(-8px, -50%) rotate(5deg);
+  }
+
+  .about-interest-chip[data-slot='bottom-left'] {
+    transform: translate(8px, -2px) rotate(-7deg);
   }
 
   .experience-heading {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+
+  .education-card {
+    padding: 20px 18px;
+  }
+
+  .education-entry {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .education-entry-dates {
+    white-space: normal;
   }
 
   .footer-location {

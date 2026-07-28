@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T19:32:30.930Z",
+  "generatedAt": "2026-07-28T20:15:07.097Z",
   "projects": [
     {
       "slug": "grocery-price-map",
@@ -84,7 +84,7 @@
       "imageUrl": "/data/project-images/jmty-map-chrome-extension.png",
       "mediaUrl": null,
       "liveUrl": "https://chromewebstore.google.com/detail/jimoty-pickup-map/fpjalenbgdfpaghclllcilcaolphcjdo",
-      "liveLabel": null,
+      "liveLabel": "Chrome Web Store",
       "githubUrl": "https://github.com/owensantoso/jmty-map-chrome-extension",
       "tags": [
         "Chrome extension",
@@ -254,14 +254,14 @@
     },
     {
       "slug": "train-shade-seat",
-      "repo": "",
+      "repo": "owensantoso/tokyo-train-shade-side",
       "title": "Train Shade Seat",
       "description": "Recommends which side of a train will get less direct sun, based on the line, direction of travel, time of day, and sun position.",
       "imageUrl": "/data/project-images/train-shade-seat.jpg",
       "mediaUrl": null,
-      "liveUrl": null,
+      "liveUrl": "http://shadeseat.owensantoso.com/",
       "liveLabel": null,
-      "githubUrl": null,
+      "githubUrl": "https://github.com/owensantoso/tokyo-train-shade-side",
       "tags": [
         "Maps",
         "Experiment"

@@ -1,5 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;500;600&display=swap');
+
 :root {
-  font-family: "Newsreader", Georgia, serif;
+  font-family: 'Source Serif 4', Georgia, serif;
   line-height: 1.5;
   font-weight: 400;
   color: #242131;
@@ -69,7 +71,7 @@ a {
 h1,
 h2,
 h3 {
-  font-family: "Instrument Serif", "Times New Roman", serif;
+  font-family: 'Cormorant Garamond', 'Times New Roman', serif;
   font-weight: 400;
   letter-spacing: -0.03em;
   color: var(--ink);
