@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-28T16:41:45.307Z",
+  "generatedAt": "2026-07-28T17:15:23.680Z",
   "projects": [
     {
       "slug": "grocery-price-map",
@@ -257,7 +257,7 @@
       "repo": "",
       "title": "Train Shade Seat",
       "description": "Recommends which side of a train will get less direct sun, based on the line, direction of travel, time of day, and sun position.",
-      "imageUrl": null,
+      "imageUrl": "/portfolio-new/data/project-images/train-shade-seat.jpg",
       "mediaUrl": null,
       "liveUrl": null,
       "liveLabel": null,

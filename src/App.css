@@ -51,8 +51,11 @@
 .hero-photo {
   display: block;
   width: 100%;
-  aspect-ratio: 3 / 4;
+  /* Square crop with the framing pushed toward the subject: the source is a wide
+     scenic shot, so a full 3:4 view would render the face only a few pixels tall. */
+  aspect-ratio: 1 / 1;
   object-fit: cover;
+  object-position: 64% 30%;
   border-radius: 2px;
 }
 

@@ -14,9 +14,7 @@ export const HERO_ROLE = 'Owen Santoso'
 export const HERO_TAGLINE =
   "Software engineer in Tokyo. I build small tools for problems I run into personally, and take a few apart just to see how they work."
 
-// Pending: drop a portrait file into public/ and set this to its path
-// (e.g. "/portfolio-new/data/owen-portrait.jpg"). Hero renders no photo frame while this is null.
-export const HERO_PHOTO_URL: string | null = null
+export const HERO_PHOTO_URL: string | null = '/portfolio-new/data/owen-portrait.jpg'
 
 export const ABOUT_INTRO =
   "I'm a software engineer based in Tokyo with a background in electrical and electronic engineering. Professionally I've worked across Java, Kotlin, React and SQL inside a ten-plus-year production codebase at LogicVein, shipping full-stack features and chasing down UI defects and race conditions."
