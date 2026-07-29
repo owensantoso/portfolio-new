@@ -22,27 +22,16 @@ export const ABOUT_INTRO =
 export const ABOUT_CLOSING =
   "I like projects that force me to connect things that weren't built to talk to each other. Native English, JLPT N2 Japanese."
 
-export type AboutAsideFact = {
-  label: string
-  value: string
-}
-
-export const ABOUT_ASIDE_FACTS: AboutAsideFact[] = [
-  { label: 'Base', value: 'Tokyo, Japan' },
-  { label: 'Focus', value: 'Full-stack, audio, maps, BLE' },
-  { label: 'Languages', value: 'Native English, JLPT N2 Japanese' },
-]
-
 export type InterestChip = {
   emoji: string
   label: string
-  slot: 'top-left' | 'top-right' | 'mid-right' | 'bottom-left'
+  slot: 'top-left' | 'top-right' | 'bottom-right' | 'bottom-left'
 }
 
 export const INTEREST_CHIPS: InterestChip[] = [
   { emoji: '📷', label: 'Fujifilm', slot: 'top-left' },
   { emoji: '🎹', label: 'Piano', slot: 'top-right' },
-  { emoji: '🎸', label: 'Guitar', slot: 'mid-right' },
+  { emoji: '🎸', label: 'Guitar', slot: 'bottom-right' },
   { emoji: '🏐', label: 'Volleyball', slot: 'bottom-left' },
 ]
 
@@ -273,8 +262,6 @@ export const PROJECT_CATEGORIES: ProjectCategory[] = [
     slugs: ['xgimi-elfin-ble-wake', 'ar-spotify-lyrics', 'train-shade-seat', 'aiko-dictionary'],
   },
 ]
-
-export const FEATURED_ORDER = ['ar-spotify-lyrics', 'aiko-dictionary', 'train-shade-seat']
 
 export type FeaturedGroup = {
   title: string

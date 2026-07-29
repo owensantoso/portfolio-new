@@ -189,8 +189,7 @@
   max-width: 64ch;
 }
 
-.about-section p,
-.about-fact dd {
+.about-section p {
   line-height: 1.65;
 }
 
@@ -202,28 +201,32 @@
 
 .about-polaroid-cluster {
   position: relative;
-  width: min(100%, 292px);
-  min-height: 346px;
+  /* Sized to hold the fanned-out chips, so none of them can push the page into a
+     horizontal scroll. */
+  width: min(100%, 340px);
+  min-height: 350px;
+  display: grid;
+  place-items: center;
 }
 
 .about-polaroid {
   position: relative;
   z-index: 2;
-  width: 100%;
+  width: 176px;
   padding: 10px 10px 24px;
   background: var(--photo-frame-bg);
   border: 1px solid var(--border);
   border-radius: 4px;
   box-shadow: var(--photo-frame-shadow);
-  transform: rotate(3deg) translateY(0);
+  transform: rotate(3deg);
   transition:
-    transform 220ms ease,
-    box-shadow 220ms ease;
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 260ms ease;
 }
 
 .about-polaroid-cluster:hover .about-polaroid {
-  transform: rotate(1.5deg) translateY(-4px);
-  box-shadow: 0 18px 34px rgba(36, 49, 38, 0.22);
+  transform: rotate(1deg) translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 38px rgba(36, 49, 38, 0.24);
 }
 
 .about-polaroid-image {
@@ -241,101 +244,73 @@
   padding: 0;
 }
 
+/* At rest every chip is stacked dead centre behind the frame and fully
+   transparent, so nothing pokes out from under the photo. */
 .about-interest-chip {
   position: absolute;
+  top: 50%;
+  left: 50%;
   z-index: 1;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 0.45rem 0.76rem;
+  padding: 0.3rem 0.68rem;
   border: 1px solid var(--glass-border);
   border-radius: 999px;
   background: var(--glass-strong);
   box-shadow: var(--glass-shadow);
   color: var(--ink);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
   white-space: nowrap;
-  opacity: 0.74;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.86);
   transition:
-    transform 220ms ease,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 220ms ease;
 }
 
 .about-interest-chip span:first-child {
-  font-size: 1rem;
+  font-size: 0.92rem;
 }
 
-.about-interest-chip[data-slot='top-left'] {
-  top: 22px;
-  left: -4px;
-  transform: translate(12px, 10px) rotate(-8deg);
+/* The fan only runs where there is gutter to fan into and a real pointer to
+   trigger it. Below this width the aside column is too narrow to clear the frame,
+   and on touch there is no hover at all. */
+@media (min-width: 1100px) and (hover: hover) {
+  .about-polaroid-cluster:hover .about-interest-chip {
+    opacity: 1;
+  }
+
+  /* Offsets clear the frame vertically: the sides of a 200px photo do not leave
+     room for a pill, but above and below it do. Staggered so they fan out rather
+     than snapping in unison. */
+  .about-polaroid-cluster:hover .about-interest-chip[data-slot='top-left'] {
+    transform: translate(calc(-50% - 112px), calc(-50% - 118px)) rotate(-9deg);
+    transition-delay: 0ms;
+  }
+
+  .about-polaroid-cluster:hover .about-interest-chip[data-slot='top-right'] {
+    transform: translate(calc(-50% + 62px), calc(-50% - 124px)) rotate(8deg);
+    transition-delay: 45ms;
+  }
+
+  .about-polaroid-cluster:hover .about-interest-chip[data-slot='bottom-right'] {
+    transform: translate(calc(-50% + 82px), calc(-50% + 164px)) rotate(6deg);
+    transition-delay: 90ms;
+  }
+
+  .about-polaroid-cluster:hover .about-interest-chip[data-slot='bottom-left'] {
+    transform: translate(calc(-50% - 102px), calc(-50% + 168px)) rotate(-8deg);
+    transition-delay: 135ms;
+  }
 }
 
-.about-interest-chip[data-slot='top-right'] {
-  top: 14px;
-  right: -6px;
-  transform: translate(-12px, 12px) rotate(8deg);
-}
-
-.about-interest-chip[data-slot='mid-right'] {
-  top: 46%;
-  right: -10px;
-  transform: translate(-10px, -50%) rotate(5deg);
-}
-
-.about-interest-chip[data-slot='bottom-left'] {
-  bottom: 20px;
-  left: -6px;
-  transform: translate(14px, -8px) rotate(-7deg);
-}
-
-.about-polaroid-cluster:hover .about-interest-chip {
-  opacity: 1;
-}
-
-.about-polaroid-cluster:hover .about-interest-chip[data-slot='top-left'] {
-  transform: translate(-10px, -10px) rotate(-11deg);
-}
-
-.about-polaroid-cluster:hover .about-interest-chip[data-slot='top-right'] {
-  transform: translate(6px, -6px) rotate(10deg);
-}
-
-.about-polaroid-cluster:hover .about-interest-chip[data-slot='mid-right'] {
-  transform: translate(18px, -50%) rotate(7deg);
-}
-
-.about-polaroid-cluster:hover .about-interest-chip[data-slot='bottom-left'] {
-  transform: translate(-4px, 10px) rotate(-9deg);
-}
-
-.about-facts {
-  width: min(100%, 320px);
-  margin: 0;
-  padding: 16px 18px;
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  background: rgba(255, 252, 246, 0.78);
-  box-shadow: var(--glass-shadow);
-  display: grid;
-  gap: 14px;
-}
-
-.about-fact {
-  display: grid;
-  gap: 5px;
-}
-
-.about-fact dt {
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.7rem;
-}
-
-.about-fact dd {
-  margin: 0;
-  color: var(--ink-soft);
+@media (prefers-reduced-motion: reduce) {
+  .about-polaroid,
+  .about-interest-chip {
+    transition: none;
+  }
 }
 
 .project-mention {
@@ -477,17 +452,9 @@
 }
 
 .education-stack {
-  margin-top: 20px;
   display: grid;
-  gap: 18px;
-}
-
-.education-card {
-  padding: 22px 24px;
-  border: 1px solid var(--border);
-  border-radius: 24px;
-  background: rgba(255, 252, 246, 0.8);
-  box-shadow: var(--glass-shadow);
+  gap: 28px;
+  margin: 20px 0 0;
 }
 
 .education-header {
@@ -498,13 +465,14 @@
   flex-wrap: wrap;
 }
 
-.education-header h3,
-.education-entry h4 {
+.education-header h3 {
   margin: 0;
+  font-size: 1.1rem;
+  font-weight: 400;
 }
 
-.education-dates,
-.education-entry-dates {
+.education-dates {
+  margin: 0;
   color: var(--muted);
   font-size: 0.88rem;
   white-space: nowrap;
@@ -512,21 +480,17 @@
 
 .education-entries {
   display: grid;
-  gap: 18px;
   margin-top: 18px;
 }
 
 .education-entry {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px 24px;
-  padding-top: 18px;
-  border-top: 1px solid var(--border);
 }
 
-.education-entry:first-child {
-  padding-top: 0;
-  border-top: 0;
+.education-entry + .education-entry {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
 }
 
 .education-entry-heading {
@@ -534,13 +498,16 @@
   gap: 5px;
 }
 
+.education-entry h4 {
+  margin: 0;
+}
+
 .education-entry-heading p {
   color: var(--ink-soft);
 }
 
 .education-bullets {
-  grid-column: 1 / -1;
-  margin: 0;
+  margin: 10px 0 0;
   padding-left: 1.2em;
   display: grid;
   gap: 6px;

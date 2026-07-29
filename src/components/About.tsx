@@ -1,11 +1,4 @@
-import {
-  ABOUT_ASIDE_FACTS,
-  ABOUT_CLOSING,
-  ABOUT_INTRO,
-  ABOUT_MENTIONS,
-  HERO_PHOTO_URL,
-  INTEREST_CHIPS,
-} from '../data/site-content'
+import { ABOUT_CLOSING, ABOUT_INTRO, ABOUT_MENTIONS, HERO_PHOTO_URL, INTEREST_CHIPS } from '../data/site-content'
 import { ProjectMentionLink } from './ProjectMentionLink'
 
 export function About() {
@@ -35,12 +28,11 @@ export function About() {
           </p>
         </div>
 
-        <aside className="about-aside" aria-label="About details">
-          {HERO_PHOTO_URL ? (
+        {HERO_PHOTO_URL ? (
+          <div className="about-aside">
             <div className="about-polaroid-cluster">
-              <div className="about-polaroid">
-                <img className="about-polaroid-image" src={HERO_PHOTO_URL} alt="Owen Santoso portrait" />
-              </div>
+              {/* Chips sit centred behind the frame at rest and fan outward on hover,
+                  so they read as things tucked underneath the photo. */}
               <ul className="about-interest-chips" aria-hidden="true">
                 {INTEREST_CHIPS.map((chip) => (
                   <li className="about-interest-chip" data-slot={chip.slot} key={chip.label}>
@@ -49,18 +41,13 @@ export function About() {
                   </li>
                 ))}
               </ul>
-            </div>
-          ) : null}
 
-          <dl className="about-facts">
-            {ABOUT_ASIDE_FACTS.map((fact) => (
-              <div className="about-fact" key={fact.label}>
-                <dt>{fact.label}</dt>
-                <dd>{fact.value}</dd>
+              <div className="about-polaroid">
+                <img className="about-polaroid-image" src={HERO_PHOTO_URL} alt="Owen Santoso portrait" />
               </div>
-            ))}
-          </dl>
-        </aside>
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   )

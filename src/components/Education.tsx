@@ -7,11 +7,9 @@ export function Education() {
 
       <div className="education-stack">
         {EDUCATION.map((school) => (
-          <article className="education-card" key={school.school}>
+          <article key={school.school}>
             <header className="education-header">
-              <div>
-                <h3>{school.school}</h3>
-              </div>
+              <h3>{school.school}</h3>
               <p className="education-dates">{school.dates}</p>
             </header>
 
@@ -22,7 +20,6 @@ export function Education() {
                     <h4>{entry.degree}</h4>
                     <p>{entry.emphasis}</p>
                   </div>
-                  <p className="education-entry-dates">{entry.dates}</p>
                   <ul className="education-bullets">
                     {entry.bullets.map((bullet) => (
                       <li key={bullet}>{bullet}</li>
