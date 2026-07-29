@@ -631,7 +631,7 @@
   background:
     linear-gradient(180deg, rgba(246, 248, 244, 0.6), rgba(231, 236, 230, 0.95)),
     linear-gradient(135deg, rgba(205, 220, 208, 0.8), rgba(249, 250, 247, 0.8));
-  cursor: zoom-in;
+  cursor: pointer;
 }
 
 .project-image {

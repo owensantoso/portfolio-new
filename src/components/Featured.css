@@ -104,11 +104,11 @@
 
 .featured-viewport {
   position: relative;
-  /* Bleed out into the page gutter. Combined with the track's matching padding
-     this keeps every slide's left edge flush with the section heading while still
-     letting the neighbouring slides show at both edges. 20px is the narrowest the
-     page gutter ever gets above 720px, so this can never cause page overflow. */
-  --lane-bleed: 20px;
+  /* Bleed out past the page gutter. Combined with the track's matching padding this
+     keeps every slide's left edge flush with the section heading while letting the
+     neighbouring slides show at both edges. This is wider than the gutter gets on a
+     narrow window, so #root clips the overhang instead of scrolling the page. */
+  --lane-bleed: 44px;
   margin-inline: calc(var(--lane-bleed) * -1);
 }
 
@@ -149,7 +149,9 @@
   /* Exactly the container width, so a snapped slide lines up with the heading. The
      trailing padding also lets the LAST slide reach that same alignment. */
   grid-auto-columns: 100%;
-  gap: 8px;
+  /* Enough air that a peeking neighbour reads as a separate slide rather than
+     crowding the current one's text. */
+  gap: 24px;
   padding-inline: var(--lane-bleed);
   scroll-padding-inline: var(--lane-bleed);
   overflow-x: auto;
@@ -208,7 +210,7 @@
 .featured-media .project-image-link {
   aspect-ratio: auto;
   height: 100%;
-  cursor: zoom-in;
+  cursor: pointer;
 }
 
 .featured-media-placeholder {
@@ -329,8 +331,11 @@
   }
 
   .featured-viewport {
-    /* The page gutter narrows to 14px at this size. */
-    --lane-bleed: 14px;
+    --lane-bleed: 30px;
+  }
+
+  .featured-track {
+    gap: 18px;
   }
 
   /* Cap the media rather than letting 16/10 eat most of a phone screen. */

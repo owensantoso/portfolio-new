@@ -66,6 +66,10 @@ a {
 
 #root {
   min-height: 100vh;
+  /* The featured carousels bleed past the page gutter so neighbouring slides can
+     peek. Clip the overhang rather than letting it scroll the page sideways.
+     `clip` (not `hidden`) so no scroll container is created. */
+  overflow-x: clip;
 }
 
 h1,

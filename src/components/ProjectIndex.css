@@ -92,7 +92,7 @@
 .index-thumb .project-image-link {
   aspect-ratio: auto;
   height: 100%;
-  cursor: zoom-in;
+  cursor: pointer;
 }
 
 .index-thumb .media-play-icon {
