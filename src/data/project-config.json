@@ -85,6 +85,7 @@
     "repo": "owensantoso/AR-spotify-lyrics",
     "title": "AR Spotify Lyrics",
     "imageUrl": "/data/AR-spotify-lyrics.png",
+    "mediaUrl": "/data/project-media/ar-spotify-lyrics.mp4",
     "tags": ["Wearables", "Spotify"],
     "sortOrder": 11,
     "featured": true,

@@ -641,6 +641,15 @@
   display: block;
 }
 
+/* A portrait clip in this landscape box would lose most of its frame to a cover
+   crop (roughly the middle third, vertically). Letterbox it instead so the hover
+   preview shows the whole recording; posters stay covered since those are already
+   composed for this box's shape. */
+video.project-image {
+  object-fit: contain;
+  background: var(--chip);
+}
+
 .media-play-icon {
   position: absolute;
   right: 12px;
