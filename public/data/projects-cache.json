@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-29T04:11:23.539Z",
+  "generatedAt": "2026-07-29T12:11:03.322Z",
   "projects": [
     {
       "slug": "grocery-price-map",
@@ -45,7 +45,7 @@
       "repo": "owensantoso/guitar-note-visualizer",
       "title": "Guitar Note Visualizer",
       "description": "Desktop-first browser tuner that listens through the microphone, detects a stable single pitch, and visualizes the note, cents offset, piano class, and optional staff.",
-      "imageUrl": null,
+      "imageUrl": "/data/project-images/guitar-note-visualizer.png",
       "mediaUrl": null,
       "liveUrl": "https://owensantoso.github.io/guitar-note-visualizer/",
       "liveLabel": null,

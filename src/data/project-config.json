@@ -16,6 +16,7 @@
     "repo": "owensantoso/guitar-note-visualizer",
     "title": "Guitar Note Visualizer",
     "description": "Desktop-first browser tuner that listens through the microphone, detects a stable single pitch, and visualizes the note, cents offset, piano class, and optional staff.",
+    "imageUrl": "/data/project-images/guitar-note-visualizer.png",
     "liveUrl": "https://owensantoso.github.io/guitar-note-visualizer/",
     "tags": ["Music", "Web audio", "Visualization"],
     "sortOrder": 3
