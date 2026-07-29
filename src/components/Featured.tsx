@@ -3,6 +3,7 @@ import './Featured.css'
 import type { ProjectCardData } from '../lib/projects'
 import { FEATURED_GROUPS, PROJECTS_URL, type FeaturedGroup } from '../data/site-content'
 import { useDragScroll } from '../lib/useDragScroll'
+import { LaneIcon } from './LaneIcon'
 import { LinkIcon, type LinkIconName } from './LinkIcon'
 import { MediaThumbnail, type MediaSelection } from './MediaThumbnail'
 
@@ -15,12 +16,6 @@ const STATUS_LABEL: Record<string, string> = {
   live: 'Live',
   prototype: 'Prototype',
   'in-development': 'In development',
-}
-
-const GROUP_KICKER: Record<FeaturedGroup['theme'], string> = {
-  hardware: 'Physical world',
-  language: 'Japan life',
-  play: 'Just for fun',
 }
 
 function primaryLinkIcon(label: string): LinkIconName {
@@ -102,7 +97,10 @@ function FeaturedLane({ group, projects, flipped, onOpenMedia }: LaneProps) {
   return (
     <section className="featured-lane" data-flipped={flipped} aria-label={group.title}>
       <div className="featured-lane-header">
-        <p className="featured-lane-kicker">{GROUP_KICKER[group.theme]}</p>
+        <p className="featured-lane-kicker">
+          <LaneIcon theme={group.theme} />
+          {group.title}
+        </p>
         <p className="featured-lane-blurb">{group.description}</p>
 
         {multiple ? (

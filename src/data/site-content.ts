@@ -266,27 +266,45 @@ export const PROJECT_CATEGORIES: ProjectCategory[] = [
 export type FeaturedGroup = {
   title: string
   description: string
-  theme: 'hardware' | 'language' | 'play'
+  theme: 'language' | 'hardware' | 'music' | 'play'
   slugs: string[]
 }
 
+/** The first slug in each lane is its lead, shown first in that lane's carousel. */
 export const FEATURED_GROUPS: FeaturedGroup[] = [
   {
-    title: 'Hardware-adjacent',
+    title: 'Japan life',
+    description: 'Tools shaped by living in Tokyo: getting around, reading things, and everyday friction.',
+    theme: 'language',
+    slugs: [
+      'train-shade-seat',
+      'aiko-dictionary',
+      'grocery-price-map',
+      'jmty-map-chrome-extension',
+      'subtitle-companion-mvp',
+    ],
+  },
+  {
+    title: 'Physical world',
     description: 'BLE experiments, wearables, and side projects that brush up against real devices.',
     theme: 'hardware',
     slugs: ['ar-spotify-lyrics', 'switchbot-tools', 'xgimi-elfin-ble-wake'],
   },
   {
-    title: 'Japanese & language',
-    description: 'Tools shaped by living in Japan: subtitles, lookup flows, lyrics, and everyday friction.',
-    theme: 'language',
-    slugs: ['aiko-dictionary', 'subtitle-companion-mvp', 'guitar-chord-companion', 'jmty-map-chrome-extension'],
+    title: 'Music',
+    description: 'Guitar practice tools, pitch detection, and a browser for game music recordings.',
+    theme: 'music',
+    slugs: [
+      'guitar-chord-companion',
+      'guitar-note-visualizer',
+      'vgm-recordings-browser',
+      'spotify-playlist-tracker',
+    ],
   },
   {
-    title: 'Fun stuff',
+    title: 'Just for fun',
     description: 'Smaller experiments and hobby projects with a bit more playfulness to them.',
     theme: 'play',
-    slugs: ['train-shade-seat', 'vgm-recordings-browser', 'guitar-note-visualizer', 'big2-helper'],
+    slugs: ['big2-helper', 'whisper-lecture-enhancer'],
   },
 ]
