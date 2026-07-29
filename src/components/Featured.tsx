@@ -1,6 +1,8 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './Featured.css'
 import type { ProjectCardData } from '../lib/projects'
 import { FEATURED_GROUPS, PROJECTS_URL, type FeaturedGroup } from '../data/site-content'
+import { useDragScroll } from '../lib/useDragScroll'
 import { LinkIcon, type LinkIconName } from './LinkIcon'
 import { MediaThumbnail, type MediaSelection } from './MediaThumbnail'
 
@@ -31,16 +33,185 @@ function primaryLinkIcon(label: string): LinkIconName {
   return 'external'
 }
 
-export function Featured({ projects, onOpenMedia }: FeaturedProps) {
-  const lanes = FEATURED_GROUPS.map((group) => {
-    const resolved = group.slugs
-      .map((slug) => projects.find((project) => project.slug === slug))
-      .filter((project): project is ProjectCardData => Boolean(project))
+type LaneProps = {
+  group: FeaturedGroup
+  projects: ProjectCardData[]
+  /** Even lanes put the media on the left, odd lanes on the right. */
+  flipped: boolean
+  onOpenMedia: (media: MediaSelection) => void
+}
 
-    return { group, lead: resolved[0], rest: resolved.slice(1) }
-  }).filter((lane): lane is { group: FeaturedGroup; lead: ProjectCardData; rest: ProjectCardData[] } =>
-    Boolean(lane.lead),
+function FeaturedLane({ group, projects, flipped, onOpenMedia }: LaneProps) {
+  const trackRef = useRef<HTMLDivElement | null>(null)
+  const [index, setIndex] = useState(0)
+  const [canScrollBack, setCanScrollBack] = useState(false)
+  const [canScrollForward, setCanScrollForward] = useState(false)
+
+  useDragScroll(trackRef)
+
+  const syncState = useCallback(() => {
+    const track = trackRef.current
+
+    if (!track) {
+      return
+    }
+
+    const maxScrollLeft = track.scrollWidth - track.clientWidth
+    setCanScrollBack(track.scrollLeft > 4)
+    setCanScrollForward(track.scrollLeft < maxScrollLeft - 4)
+
+    const slide = track.querySelector<HTMLElement>('.featured-band')
+    const step = slide ? slide.offsetWidth + 20 : track.clientWidth
+    setIndex(Math.min(projects.length - 1, Math.max(0, Math.round(track.scrollLeft / step))))
+  }, [projects.length])
+
+  useEffect(() => {
+    const track = trackRef.current
+
+    if (!track) {
+      return
+    }
+
+    syncState()
+
+    const observer = new ResizeObserver(syncState)
+    observer.observe(track)
+    track.addEventListener('scroll', syncState, { passive: true })
+
+    return () => {
+      observer.disconnect()
+      track.removeEventListener('scroll', syncState)
+    }
+  }, [syncState])
+
+  function page(direction: -1 | 1) {
+    const track = trackRef.current
+
+    if (!track) {
+      return
+    }
+
+    const slide = track.querySelector<HTMLElement>('.featured-band')
+    const step = slide ? slide.offsetWidth + 20 : track.clientWidth
+
+    track.scrollBy({ left: direction * step, behavior: 'smooth' })
+  }
+
+  const multiple = projects.length > 1
+
+  return (
+    <section className="featured-lane" data-flipped={flipped} aria-label={group.title}>
+      <div className="featured-lane-header">
+        <p className="featured-lane-kicker">{GROUP_KICKER[group.theme]}</p>
+        <p className="featured-lane-blurb">{group.description}</p>
+
+        {multiple ? (
+          <div className="featured-lane-controls">
+            <span className="featured-lane-count" aria-hidden="true">
+              {index + 1}/{projects.length}
+            </span>
+            <button
+              type="button"
+              className="featured-arrow"
+              onClick={() => page(-1)}
+              disabled={!canScrollBack}
+              aria-label={`Previous ${group.title} project`}
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              className="featured-arrow"
+              onClick={() => page(1)}
+              disabled={!canScrollForward}
+              aria-label={`Next ${group.title} project`}
+            >
+              →
+            </button>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="featured-viewport" data-back={canScrollBack} data-forward={canScrollForward}>
+        <div className="featured-track" ref={trackRef}>
+          {projects.map((project) => (
+            <article className="featured-band" key={project.slug}>
+              <div className="featured-media">
+                {project.imageUrl || project.mediaUrl ? (
+                  <MediaThumbnail
+                    imageUrl={project.imageUrl}
+                    mediaUrl={project.mediaUrl}
+                    title={project.title}
+                    onOpen={onOpenMedia}
+                  />
+                ) : (
+                  <span className="featured-media-placeholder" aria-hidden="true">
+                    {project.title.charAt(0)}
+                  </span>
+                )}
+              </div>
+
+              <div className="featured-content">
+                <div className="featured-content-top">
+                  <div className="featured-heading">
+                    <h3>{project.title}</h3>
+                    {project.status ? (
+                      <span className="status-pill">
+                        <span className="status-dot" data-status={project.status} />
+                        {STATUS_LABEL[project.status]}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <p className="featured-description">{project.description}</p>
+
+                  {project.tags.length > 0 ? (
+                    <ul className="featured-tags" aria-label={`${project.title} tags`}>
+                      {project.tags.map((tag) => (
+                        <li key={tag}>{tag}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+
+                <div className="featured-actions">
+                  {project.liveUrl ? (
+                    <a
+                      className="action-link action-link-primary"
+                      href={project.liveUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <LinkIcon name={primaryLinkIcon(project.liveLabel ?? 'Website')} />
+                      {project.liveLabel ?? 'Website'}
+                    </a>
+                  ) : null}
+                  {project.githubUrl ? (
+                    <a className="action-link" href={project.githubUrl} target="_blank" rel="noreferrer">
+                      <LinkIcon name="github" />
+                      Source
+                    </a>
+                  ) : null}
+                  <a className="featured-more" href={`${PROJECTS_URL}#project-${project.slug}`}>
+                    Details
+                  </a>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    </section>
   )
+}
+
+export function Featured({ projects, onOpenMedia }: FeaturedProps) {
+  const lanes = FEATURED_GROUPS.map((group) => ({
+    group,
+    resolved: group.slugs
+      .map((slug) => projects.find((project) => project.slug === slug))
+      .filter((project): project is ProjectCardData => Boolean(project)),
+  })).filter(({ resolved }) => resolved.length > 0)
 
   if (lanes.length === 0) {
     return null
@@ -54,88 +225,15 @@ export function Featured({ projects, onOpenMedia }: FeaturedProps) {
         that were mostly just fun to make.
       </p>
 
-      <div className="featured-bands">
-        {lanes.map(({ group, lead, rest }) => (
-          <article className="featured-band" key={group.theme}>
-            <div className="featured-media">
-              {lead.imageUrl || lead.mediaUrl ? (
-                <MediaThumbnail
-                  imageUrl={lead.imageUrl}
-                  mediaUrl={lead.mediaUrl}
-                  title={lead.title}
-                  onOpen={onOpenMedia}
-                />
-              ) : (
-                <span className="featured-media-placeholder" aria-hidden="true">
-                  {lead.title.charAt(0)}
-                </span>
-              )}
-            </div>
-
-            <div className="featured-content">
-              <div className="featured-content-top">
-                <p className="featured-lane">{GROUP_KICKER[group.theme]}</p>
-
-                <div className="featured-heading">
-                  <h3>{lead.title}</h3>
-                  {lead.status ? (
-                    <span className="status-pill">
-                      <span className="status-dot" data-status={lead.status} />
-                      {STATUS_LABEL[lead.status]}
-                    </span>
-                  ) : null}
-                </div>
-
-                <p className="featured-description">{lead.description}</p>
-
-                {lead.tags.length > 0 ? (
-                  <ul className="featured-tags" aria-label={`${lead.title} tags`}>
-                    {lead.tags.map((tag) => (
-                      <li key={tag}>{tag}</li>
-                    ))}
-                  </ul>
-                ) : null}
-              </div>
-
-              {/* Pinned to the bottom of the column so actions line up across bands
-                  no matter how long each description runs. */}
-              <div className="featured-actions">
-                {lead.liveUrl ? (
-                  <a
-                    className="action-link action-link-primary"
-                    href={lead.liveUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    <LinkIcon name={primaryLinkIcon(lead.liveLabel ?? 'Website')} />
-                    {lead.liveLabel ?? 'Website'}
-                  </a>
-                ) : null}
-                {lead.githubUrl ? (
-                  <a className="action-link" href={lead.githubUrl} target="_blank" rel="noreferrer">
-                    <LinkIcon name="github" />
-                    Source
-                  </a>
-                ) : null}
-                <a className="featured-more" href={`${PROJECTS_URL}#project-${lead.slug}`}>
-                  Details
-                </a>
-              </div>
-
-              {/* The rest of the lane stays as quiet links, so all the work is reachable
-                  without turning the section into a wall of cards. */}
-              {rest.length > 0 ? (
-                <p className="featured-alsoin">
-                  <span>Also in this lane</span>
-                  {rest.map((project) => (
-                    <a key={project.slug} href={`${PROJECTS_URL}#project-${project.slug}`}>
-                      {project.title}
-                    </a>
-                  ))}
-                </p>
-              ) : null}
-            </div>
-          </article>
+      <div className="featured-lanes">
+        {lanes.map(({ group, resolved }, laneIndex) => (
+          <FeaturedLane
+            key={group.theme}
+            group={group}
+            projects={resolved}
+            flipped={laneIndex % 2 === 1}
+            onOpenMedia={onOpenMedia}
+          />
         ))}
       </div>
     </section>

@@ -8,38 +8,175 @@
   line-height: 1.6;
 }
 
-.featured-bands {
+.featured-lanes {
   display: grid;
   gap: 8px;
   margin-top: 22px;
 }
 
-/* Full-width bands rather than a card wall: each lane's lead project gets real
-   presence, the media is big enough to actually show the work, and every band is
-   its own grid row so nothing drifts out of alignment when text lengths differ.
-   No border-bottom here: the next section's border-top is the single divider. */
+/* One lane per theme. Each lane is a horizontal carousel whose slides are the same
+   full-width bands as before, so paging through a lane never changes the layout. */
+.featured-lane {
+  padding: 26px 0 32px;
+  border-top: 1px solid var(--border);
+}
+
+.featured-lane-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 6px 24px;
+  margin-bottom: 18px;
+}
+
+.featured-lane-kicker {
+  margin: 0;
+  color: var(--accent-hanko);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.featured-lane-blurb {
+  grid-column: 1;
+  margin: 0;
+  max-width: 62ch;
+  font-size: 0.92rem;
+}
+
+.featured-lane-controls {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: center;
+  /* Quiet until the lane is hovered or something inside it takes focus. */
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.featured-lane:hover .featured-lane-controls,
+.featured-lane:focus-within .featured-lane-controls {
+  opacity: 1;
+}
+
+.featured-lane-count {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.06em;
+}
+
+.featured-arrow {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  color: var(--ink);
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease;
+}
+
+.featured-arrow:hover:not(:disabled) {
+  color: var(--accent-hanko);
+  border-color: var(--accent-hanko);
+  background: var(--glass-strong);
+}
+
+.featured-arrow:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.featured-viewport {
+  position: relative;
+}
+
+/* Fades hint that the lane continues past the edge. Only the side with more
+   content fades, so a lane at either end never looks cut off for no reason. */
+.featured-viewport::before,
+.featured-viewport::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 46px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.featured-viewport::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(250, 245, 233, 0.95), rgba(250, 245, 233, 0));
+}
+
+.featured-viewport::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(250, 245, 233, 0.95), rgba(250, 245, 233, 0));
+}
+
+.featured-viewport[data-back='true']::before,
+.featured-viewport[data-forward='true']::after {
+  opacity: 1;
+}
+
+.featured-track {
+  display: grid;
+  grid-auto-flow: column;
+  /* Slightly narrower than the viewport so the next band peeks in at the edge. */
+  grid-auto-columns: calc(100% - 54px);
+  gap: 20px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  cursor: grab;
+}
+
+.featured-track::-webkit-scrollbar {
+  display: none;
+}
+
+.featured-track.is-dragging {
+  cursor: grabbing;
+  /* Snapping mid-drag fights the pointer. */
+  scroll-snap-type: none;
+  scroll-behavior: auto;
+}
+
 .featured-band {
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   gap: 34px;
   align-items: stretch;
-  padding: 32px 0;
-  border-top: 1px solid var(--border);
+  scroll-snap-align: start;
 }
 
-/* Alternating sides give the run of bands some rhythm. The track sizes swap too,
-   otherwise the media lands in the narrower column on every other band and its
-   height stops matching. */
-.featured-band:nth-child(even) {
+/* Odd lanes put the media on the right. Track sizes swap with it, otherwise the
+   media lands in the narrower column and its height stops matching. */
+.featured-lane[data-flipped='true'] .featured-band {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
 }
 
-.featured-band:nth-child(even) .featured-media {
+.featured-lane[data-flipped='true'] .featured-media {
   grid-column: 2;
   grid-row: 1;
 }
 
-.featured-band:nth-child(even) .featured-content {
+.featured-lane[data-flipped='true'] .featured-content {
   grid-column: 1;
   grid-row: 1;
 }
@@ -83,15 +220,6 @@
 .featured-content-top {
   display: grid;
   gap: 12px;
-}
-
-.featured-lane {
-  margin: 0;
-  color: var(--accent-hanko);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.7rem;
-  font-weight: 600;
 }
 
 .featured-heading {
@@ -156,55 +284,60 @@
   border-bottom-color: var(--accent-hanko);
 }
 
-.featured-alsoin {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 6px 14px;
-  margin: 0;
-  padding-top: 14px;
-  border-top: 1px dotted var(--border-strong);
-  font-size: 0.86rem;
+@media (prefers-reduced-motion: reduce) {
+  .featured-lane-controls,
+  .featured-viewport::before,
+  .featured-viewport::after {
+    transition: none;
+  }
 }
 
-.featured-alsoin > span {
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.7rem;
-}
-
-.featured-alsoin a {
-  color: var(--ink-soft);
-  text-decoration: none;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 1px;
-  transition:
-    color 160ms ease,
-    border-color 160ms ease;
-}
-
-.featured-alsoin a:hover {
-  color: var(--accent-hanko);
-  border-bottom-color: var(--accent-hanko);
+/* Touch and narrow screens: controls are always visible since there is no hover,
+   and the band stacks. */
+@media (hover: none) {
+  .featured-lane-controls {
+    opacity: 1;
+  }
 }
 
 @media (max-width: 860px) {
   .featured-band,
-  .featured-band:nth-child(even) .featured-media,
-  .featured-band:nth-child(even) .featured-content {
+  .featured-lane[data-flipped='true'] .featured-band {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .featured-lane[data-flipped='true'] .featured-media,
+  .featured-lane[data-flipped='true'] .featured-content {
     grid-column: 1;
     grid-row: auto;
   }
 
-  .featured-band,
-  .featured-band:nth-child(even) {
+  .featured-track {
+    grid-auto-columns: calc(100% - 32px);
+    gap: 16px;
+  }
+
+  .featured-lane-header {
     grid-template-columns: 1fr;
-    gap: 20px;
-    padding: 26px 0;
+  }
+
+  /* Once the controls sit in the flow rather than beside the heading, hiding them
+     until hover reads as broken. */
+  .featured-lane-controls {
+    grid-column: 1;
+    grid-row: auto;
+    justify-content: flex-start;
+    margin-top: 4px;
+    opacity: 1;
   }
 
   .featured-more {
     margin-left: 0;
+  }
+
+  .featured-viewport::before,
+  .featured-viewport::after {
+    width: 24px;
   }
 }
