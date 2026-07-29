@@ -197,14 +197,15 @@
   display: grid;
   gap: 18px;
   justify-items: end;
+  align-content: start;
 }
 
 .about-polaroid-cluster {
   position: relative;
-  /* Sized to hold the fanned-out chips, so none of them can push the page into a
-     horizontal scroll. */
-  width: min(100%, 340px);
-  min-height: 350px;
+  width: min(100%, 300px);
+  /* Sized to the photo plus just enough room for the corner stickers, so the
+     column does not open up a pool of dead space above and below the photo. */
+  min-height: 232px;
   display: grid;
   place-items: center;
 }
@@ -225,7 +226,7 @@
 }
 
 .about-polaroid-cluster:hover .about-polaroid {
-  transform: rotate(1deg) translateY(-6px) scale(1.02);
+  transform: rotate(1deg) translateY(-4px) scale(1.02);
   box-shadow: 0 20px 38px rgba(36, 49, 38, 0.24);
 }
 
@@ -244,64 +245,58 @@
   padding: 0;
 }
 
-/* At rest every chip is stacked dead centre behind the frame and fully
-   transparent, so nothing pokes out from under the photo. */
+/* Round stickers rather than labelled pills: no text means they stay small enough
+   to clear the photo's corners, and they read as things stuck to the frame. Each
+   starts stacked dead centre behind the photo and fully transparent. */
 .about-interest-chip {
   position: absolute;
   top: 50%;
   left: 50%;
   z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.3rem 0.68rem;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   border: 1px solid var(--glass-border);
-  border-radius: 999px;
   background: var(--glass-strong);
-  box-shadow: var(--glass-shadow);
-  color: var(--ink);
-  font-size: 0.78rem;
-  line-height: 1.35;
-  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(35, 33, 49, 0.16);
+  font-size: 1.02rem;
+  line-height: 1;
+  cursor: default;
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.86);
+  transform: translate(-50%, -50%) scale(0.75);
   transition:
-    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
     opacity 220ms ease;
 }
 
-.about-interest-chip span:first-child {
-  font-size: 0.92rem;
-}
-
-/* The fan only runs where there is gutter to fan into and a real pointer to
-   trigger it. Below this width the aside column is too narrow to clear the frame,
-   and on touch there is no hover at all. */
+/* The fan only runs where there is room beside the column and a real pointer to
+   trigger it. On touch there is no hover at all. */
 @media (min-width: 1100px) and (hover: hover) {
   .about-polaroid-cluster:hover .about-interest-chip {
     opacity: 1;
   }
 
-  /* Offsets clear the frame vertically: the sides of a 200px photo do not leave
-     room for a pill, but above and below it do. Staggered so they fan out rather
-     than snapping in unison. */
+  /* Diagonal corners: a sticker clears the frame on both axes at once there, which
+     needs far less travel than going straight out from a side. */
   .about-polaroid-cluster:hover .about-interest-chip[data-slot='top-left'] {
-    transform: translate(calc(-50% - 112px), calc(-50% - 118px)) rotate(-9deg);
+    transform: translate(calc(-50% - 120px), calc(-50% - 104px)) rotate(-12deg);
     transition-delay: 0ms;
   }
 
   .about-polaroid-cluster:hover .about-interest-chip[data-slot='top-right'] {
-    transform: translate(calc(-50% + 62px), calc(-50% - 124px)) rotate(8deg);
+    transform: translate(calc(-50% + 120px), calc(-50% - 104px)) rotate(10deg);
     transition-delay: 45ms;
   }
 
   .about-polaroid-cluster:hover .about-interest-chip[data-slot='bottom-right'] {
-    transform: translate(calc(-50% + 82px), calc(-50% + 164px)) rotate(6deg);
+    transform: translate(calc(-50% + 120px), calc(-50% + 104px)) rotate(-8deg);
     transition-delay: 90ms;
   }
 
   .about-polaroid-cluster:hover .about-interest-chip[data-slot='bottom-left'] {
-    transform: translate(calc(-50% - 102px), calc(-50% + 168px)) rotate(-8deg);
+    transform: translate(calc(-50% - 120px), calc(-50% + 104px)) rotate(11deg);
     transition-delay: 135ms;
   }
 }

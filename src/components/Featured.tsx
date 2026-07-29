@@ -219,8 +219,8 @@ export function Featured({ projects, onOpenMedia }: FeaturedProps) {
     <section id="featured" className="featured-section" aria-label="Featured projects">
       <h2>Featured</h2>
       <p className="featured-intro">
-        Three lanes of work: things that touch real hardware, tools shaped by living in Japan, and builds
-        that were mostly just fun to make.
+        Sorted into lanes: tools shaped by living in Tokyo, things that touch real hardware, a few built
+        around music, and some that were mostly just fun to make.
       </p>
 
       <div className="featured-lanes">

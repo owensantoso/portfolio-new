@@ -104,25 +104,41 @@
 
 .featured-viewport {
   position: relative;
+  /* Bleed out into the page gutter. Combined with the track's matching padding
+     this keeps every slide's left edge flush with the section heading while still
+     letting the neighbouring slides show at both edges. 20px is the narrowest the
+     page gutter ever gets above 720px, so this can never cause page overflow. */
+  --lane-bleed: 20px;
+  margin-inline: calc(var(--lane-bleed) * -1);
 }
 
-/* Only the right edge fades. Slides snap flush to the left, so a left-hand
-   gradient would sit on top of the current slide's own text instead of over a
-   peeking neighbour — which read as a rendering fault. */
+/* The gradients live entirely inside the bleed strip, ending exactly where the
+   current slide begins, so they only ever wash over a peeking neighbour and never
+   over the slide you are reading. */
+.featured-viewport::before,
 .featured-viewport::after {
   content: '';
   position: absolute;
   top: 0;
   bottom: 0;
-  right: 0;
-  width: 38px;
+  width: var(--lane-bleed);
   z-index: 2;
   pointer-events: none;
   opacity: 0;
   transition: opacity 220ms ease;
-  background: linear-gradient(to left, rgba(250, 245, 233, 0.92), rgba(250, 245, 233, 0));
 }
 
+.featured-viewport::before {
+  left: 0;
+  background: linear-gradient(to right, rgba(250, 245, 233, 0.96), rgba(250, 245, 233, 0.1));
+}
+
+.featured-viewport::after {
+  right: 0;
+  background: linear-gradient(to left, rgba(250, 245, 233, 0.96), rgba(250, 245, 233, 0.1));
+}
+
+.featured-viewport[data-back='true']::before,
 .featured-viewport[data-forward='true']::after {
   opacity: 1;
 }
@@ -130,9 +146,12 @@
 .featured-track {
   display: grid;
   grid-auto-flow: column;
-  /* Slightly narrower than the viewport so the next band peeks in at the edge. */
-  grid-auto-columns: calc(100% - 54px);
-  gap: 20px;
+  /* Exactly the container width, so a snapped slide lines up with the heading. The
+     trailing padding also lets the LAST slide reach that same alignment. */
+  grid-auto-columns: 100%;
+  gap: 8px;
+  padding-inline: var(--lane-bleed);
+  scroll-padding-inline: var(--lane-bleed);
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
@@ -197,7 +216,7 @@
   place-items: center;
   width: 100%;
   height: 100%;
-  font-family: 'Cormorant Garamond', 'Times New Roman', serif;
+  font-family: 'Fraunces', 'Times New Roman', serif;
   font-size: 3rem;
   color: var(--muted);
   opacity: 0.45;
@@ -309,9 +328,9 @@
     grid-row: auto;
   }
 
-  .featured-track {
-    grid-auto-columns: calc(100% - 32px);
-    gap: 16px;
+  .featured-viewport {
+    /* The page gutter narrows to 14px at this size. */
+    --lane-bleed: 14px;
   }
 
   /* Cap the media rather than letting 16/10 eat most of a phone screen. */
@@ -365,7 +384,5 @@
     margin-left: 0;
   }
 
-  .featured-viewport::after {
-    width: 20px;
-  }
+
 }

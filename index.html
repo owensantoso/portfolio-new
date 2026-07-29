@@ -4,7 +4,9 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- minimum-scale stops iOS pinch-zooming out past the layout into dead space.
+         No maximum-scale, so zooming IN for accessibility still works. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0" />
     <meta
       name="description"
       content="Owen Santoso, software engineer in Tokyo. Practical tools, browser extensions, and a few odd interfaces."

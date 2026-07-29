@@ -31,13 +31,17 @@ export function About() {
         {HERO_PHOTO_URL ? (
           <div className="about-aside">
             <div className="about-polaroid-cluster">
-              {/* Chips sit centred behind the frame at rest and fan outward on hover,
-                  so they read as things tucked underneath the photo. */}
+              {/* Round emoji stickers, tucked behind the photo at rest and peeling out
+                  to its corners on hover. Decorative, so hidden from assistive tech. */}
               <ul className="about-interest-chips" aria-hidden="true">
                 {INTEREST_CHIPS.map((chip) => (
-                  <li className="about-interest-chip" data-slot={chip.slot} key={chip.label}>
-                    <span>{chip.emoji}</span>
-                    <span>{chip.label}</span>
+                  <li
+                    className="about-interest-chip"
+                    data-slot={chip.slot}
+                    title={chip.label}
+                    key={chip.label}
+                  >
+                    {chip.emoji}
                   </li>
                 ))}
               </ul>
