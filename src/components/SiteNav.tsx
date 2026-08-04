@@ -5,7 +5,7 @@ export type NavSection = { id: string; label: string }
 
 type SiteNavProps = {
   /** Which page this is, so the matching link reads as current. */
-  page: 'home' | 'projects'
+  page: 'home' | 'projects' | 'other'
   /** Label of the section currently in view, or null when above the first one. */
   sectionLabel?: string | null
 }
