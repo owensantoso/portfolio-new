@@ -13,7 +13,7 @@
 
   const SAFE_STYLES = Object.freeze([
     "align-content", "align-items", "align-self", "aspect-ratio",
-    "background-color", "bottom", "border-bottom-color", "border-bottom-left-radius",
+    "background-color", "background-position", "background-repeat", "background-size", "bottom", "border-bottom-color", "border-bottom-left-radius",
     "border-bottom-right-radius", "border-bottom-style", "border-bottom-width",
     "border-collapse", "border-left-color", "border-left-style",
     "border-left-width", "border-right-color", "border-right-style",
@@ -64,10 +64,15 @@
   const interactiveCapabilitySet = new Set(INTERACTIVE_CAPABILITIES);
   const patchAttributeSet = new Set([
     "ariaLabel", "checked", "disabled", "inputType", "placeholder",
-    "selected", "selectedIndex", "title", "value"
+    "selected", "selectedIndex", "title", "value", "backgroundImageUrl"
   ]);
   const PARTICIPANT_PATTERN = /^[A-Za-z0-9_-]{22}$/;
   const MAX_PATCH_OPERATIONS = 256;
+  const MAX_VISUAL_ASSETS = 24;
+  const MAX_VISUAL_ASSET_DATA_LENGTH = 750000;
+  const MAX_VISUAL_ASSET_TOTAL_LENGTH = 2500000;
+  const MAX_REMOTE_FONTS = 16;
+  const MAX_REMOTE_FONT_DATA_LENGTH = 300000;
 
   function validBoundedString(value, maximum = 100) {
     return typeof value === "string" && value.length > 0 && value.length <= maximum;
@@ -116,6 +121,17 @@
     }
   }
 
+  function normalizeRemoteAssetUrl(rawUrl) {
+    try {
+      const url = new URL(String(rawUrl || ""));
+      if (!["http:", "https:"].includes(url.protocol)) return null;
+      if (url.username || url.password || url.href.length > 2048) return null;
+      return url.href;
+    } catch (_error) {
+      return null;
+    }
+  }
+
   function safeStyleValue(value) {
     const normalized = String(value || "").trim();
     if (!normalized) return null;
@@ -135,6 +151,52 @@
     return result;
   }
 
+  function validateVisualAssets(assets) {
+    if (assets === undefined) return true;
+    if (!assets || typeof assets !== "object" || Array.isArray(assets)) return false;
+    const entries = Object.entries(assets);
+    if (entries.length > MAX_VISUAL_ASSETS) return false;
+    let totalLength = 0;
+    for (const [assetId, asset] of entries) {
+      if (!PARTICIPANT_PATTERN.test(assetId)) return false;
+      if (!asset || typeof asset !== "object" || Array.isArray(asset)) return false;
+      if (asset.mime !== "image/png" && asset.mime !== "image/webp") return false;
+      if (!Number.isInteger(asset.width) || asset.width < 1 || asset.width > 2048) return false;
+      if (!Number.isInteger(asset.height) || asset.height < 1 || asset.height > 2048) return false;
+      if (
+        typeof asset.dataUrl !== "string" ||
+        asset.dataUrl.length > MAX_VISUAL_ASSET_DATA_LENGTH ||
+        !asset.dataUrl.startsWith(`data:${asset.mime};base64,`)
+      ) return false;
+      totalLength += asset.dataUrl.length;
+      if (totalLength > MAX_VISUAL_ASSET_TOTAL_LENGTH) return false;
+    }
+    return true;
+  }
+
+  function validateRemoteFonts(fonts) {
+    if (fonts === undefined) return true;
+    if (!Array.isArray(fonts) || fonts.length > MAX_REMOTE_FONTS) return false;
+    return fonts.every((font) => Boolean(
+      font &&
+      typeof font === "object" &&
+      !Array.isArray(font) &&
+      validBoundedString(font.family) &&
+      font.family.length <= 100 &&
+      !/[{};]/u.test(font.family) &&
+      validBoundedString(font.weight, 30) &&
+      /^[1-9]00(?: [1-9]00)?$|^(?:normal|bold)$/u.test(font.weight) &&
+      validBoundedString(font.style, 30) &&
+      /^(?:normal|italic|oblique(?: -?[0-9]+(?:\.[0-9]+)?deg)?)$/u.test(font.style) &&
+      normalizeRemoteAssetUrl(font.url) === font.url &&
+      (font.dataUrl === undefined || (
+        typeof font.dataUrl === "string" &&
+        font.dataUrl.length <= MAX_REMOTE_FONT_DATA_LENGTH &&
+        /^data:font\/woff2;base64,[A-Za-z0-9+/=]+$/u.test(font.dataUrl)
+      ))
+    ));
+  }
+
   function validateRenderNode(node, counters = { count: 0, depth: 0 }) {
     if (!node || typeof node !== "object" || Array.isArray(node)) return false;
     counters.count += 1;
@@ -144,7 +206,12 @@
       return typeof node.text === "string" && node.text.length <= 20000;
     }
     if (node.type === "placeholder") {
-      return typeof node.label === "string" && node.label.length <= 200;
+      return Boolean(
+        typeof node.label === "string" &&
+        node.label.length <= 200 &&
+        (node.assetId === undefined || PARTICIPANT_PATTERN.test(node.assetId)) &&
+        (node.remoteUrl === undefined || normalizeRemoteAssetUrl(node.remoteUrl) === node.remoteUrl)
+      );
     }
     if (node.type !== "element" || !safeTagSet.has(node.tag)) return false;
     if (node.styles && Object.keys(sanitizeStyleMap(node.styles)).length !== Object.keys(node.styles).length) {
@@ -153,6 +220,12 @@
     if (node.attributes && (typeof node.attributes !== "object" || Array.isArray(node.attributes))) {
       return false;
     }
+    if (
+      node.attributes &&
+      (Object.keys(node.attributes).some((attribute) => !patchAttributeSet.has(attribute)) ||
+        (node.attributes.backgroundImageUrl !== undefined &&
+          normalizeRemoteAssetUrl(node.attributes.backgroundImageUrl) !== node.attributes.backgroundImageUrl))
+    ) return false;
     if (!Array.isArray(node.children)) return false;
 
     for (const child of node.children) {
@@ -187,7 +260,16 @@
         return false;
       }
     }
-    return validateRenderNode(snapshot.root);
+    if (!validateVisualAssets(snapshot.assets)) return false;
+    if (!validateRemoteFonts(snapshot.fonts)) return false;
+    if (!validateRenderNode(snapshot.root)) return false;
+    let validReferences = true;
+    const visit = (node) => {
+      if (node?.type === "placeholder" && node.assetId && !snapshot.assets?.[node.assetId]) validReferences = false;
+      for (const child of node?.children || []) visit(child);
+    };
+    visit(snapshot.root);
+    return validReferences;
   }
 
   function sameRecord(left, right) {
@@ -216,7 +298,9 @@
       (previousNode.type === "placeholder" && (
         previousNode.label !== nextNode.label ||
         previousNode.width !== nextNode.width ||
-        previousNode.height !== nextNode.height
+        previousNode.height !== nextNode.height ||
+        previousNode.assetId !== nextNode.assetId ||
+        previousNode.remoteUrl !== nextNode.remoteUrl
       ))
     ) {
       operations.push({ op: "replace", path, node: nextNode });
@@ -275,6 +359,12 @@
       operations
     };
     if (nextSnapshot.display !== undefined) patch.display = nextSnapshot.display;
+    if (!sameRecord(previousSnapshot.fonts, nextSnapshot.fonts)) patch.fonts = nextSnapshot.fonts || [];
+    const addedAssets = {};
+    for (const [assetId, asset] of Object.entries(nextSnapshot.assets || {})) {
+      if (JSON.stringify(previousSnapshot.assets?.[assetId]) !== JSON.stringify(asset)) addedAssets[assetId] = asset;
+    }
+    if (Object.keys(addedAssets).length) patch.assets = addedAssets;
     return patch;
   }
 
@@ -298,8 +388,11 @@
       ...patch,
       type: "shared-view-snapshot",
       version: 0,
+      assets: patch.assets || {},
       root: { type: "element", tag: "body", styles: {}, attributes: {}, children: [] }
     })) return false;
+    if (!validateVisualAssets(patch.assets)) return false;
+    if (!validateRemoteFonts(patch.fonts)) return false;
     if (!Array.isArray(patch.operations) || patch.operations.length > MAX_PATCH_OPERATIONS) return false;
     for (const operation of patch.operations) {
       if (!operation || !validatePatchPath(operation.path)) return false;
@@ -401,6 +494,10 @@
       diagnostics: patch.diagnostics,
       root
     };
+    if (snapshot.assets !== undefined || patch.assets !== undefined) {
+      result.assets = { ...(snapshot.assets || {}), ...(patch.assets || {}) };
+    }
+    if (snapshot.fonts !== undefined || patch.fonts !== undefined) result.fonts = patch.fonts || snapshot.fonts || [];
     if (patch.display !== undefined) result.display = patch.display;
     return validateSnapshot(result) ? result : null;
   }
@@ -567,6 +664,7 @@
     encodeHostPresence,
     maskInputValue,
     normalizeSourceUrl,
+    normalizeRemoteAssetUrl,
     normalizeTag,
     sanitizeStyleMap,
     shouldOmitTag,
@@ -579,6 +677,8 @@
     validateEncodedGuestPresence,
     validateEncodedHostPresence,
     validateRenderNode,
+    validateRemoteFonts,
+    validateVisualAssets,
     validateSnapshotPatch,
     validateSnapshot
   });

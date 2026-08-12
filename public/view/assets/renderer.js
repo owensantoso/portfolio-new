@@ -31,6 +31,7 @@
     let exploreMode = false;
     let localPresence = null;
     let currentScale = 1;
+    const loadedRemoteFonts = new Set();
 
     function formatBytes(bytes) {
       if (!Number.isFinite(bytes)) return "—";
@@ -45,9 +46,25 @@
       }
     }
 
-    function buildNode(node) {
+    function buildNode(node, assets = {}) {
       if (node.type === "text") return receiverDocument.createTextNode(node.text);
       if (node.type === "placeholder") {
+        const asset = node.assetId ? assets[node.assetId] : null;
+        const imageSource = asset?.dataUrl || Contract.normalizeRemoteAssetUrl(node.remoteUrl);
+        if (imageSource) {
+          const image = receiverDocument.createElement("img");
+          image.className = "shared-view-visual-asset";
+          image.alt = node.label;
+          image.draggable = false;
+          image.decoding = "async";
+          image.referrerPolicy = "no-referrer";
+          image.src = imageSource;
+          applySafeStyles(image, node.styles);
+          image.style.width = `${Math.max(1, Number(node.width) || asset?.width || 1)}px`;
+          image.style.height = `${Math.max(1, Number(node.height) || asset?.height || 1)}px`;
+          if (!asset) image.addEventListener("error", () => image.classList.add("shared-view-visual-asset-failed"), { once: true });
+          return image;
+        }
         const placeholder = receiverDocument.createElement("div");
         placeholder.className = "shared-view-placeholder";
         placeholder.textContent = node.label;
@@ -62,6 +79,7 @@
       const attributes = node.attributes || {};
       if (attributes.ariaLabel) element.setAttribute("aria-label", attributes.ariaLabel);
       if (attributes.title) element.title = attributes.title;
+      if (attributes.backgroundImageUrl) element.style.backgroundImage = `url(${JSON.stringify(attributes.backgroundImageUrl)})`;
       if (element instanceof HTMLInputElement) {
         element.type = ["checkbox", "radio"].includes(attributes.inputType) ? attributes.inputType : "text";
         element.value = String(attributes.value || "");
@@ -77,12 +95,29 @@
       } else if (element instanceof HTMLButtonElement) {
         element.disabled = true;
       }
-      for (const child of node.children || []) element.appendChild(buildNode(child));
+      for (const child of node.children || []) element.appendChild(buildNode(child, assets));
       if (element instanceof HTMLSelectElement && Number.isInteger(attributes.selectedIndex)) {
         element.selectedIndex = attributes.selectedIndex;
       }
       if (element instanceof HTMLOptionElement) element.selected = Boolean(attributes.selected);
       return element;
+    }
+
+    function loadRemoteFonts(fonts = []) {
+      const FontFaceConstructor = receiverDocument.defaultView?.FontFace;
+      if (!FontFaceConstructor || !receiverDocument.fonts) return;
+      for (const font of fonts) {
+        const source = font.dataUrl || font.url;
+        const key = `${font.family}\n${font.weight}\n${font.style}\n${source}`;
+        if (loadedRemoteFonts.has(key)) continue;
+        loadedRemoteFonts.add(key);
+        const face = new FontFaceConstructor(font.family, `url(${JSON.stringify(source)})`, {
+          weight: font.weight,
+          style: font.style
+        });
+        receiverDocument.fonts.add(face);
+        face.load().catch(() => loadedRemoteFonts.delete(key));
+      }
     }
 
     function updateScale() {
@@ -213,7 +248,10 @@
         return false;
       }
       currentSnapshot = snapshot;
-      viewportSurface.replaceChildren(buildNode(snapshot.root));
+      loadRemoteFonts(snapshot.fonts || []);
+      const renderedRoot = buildNode(snapshot.root, snapshot.assets || {});
+      renderedRoot.style.minHeight = `${Math.max(snapshot.viewport.height, snapshot.viewport.documentHeight || 0)}px`;
+      viewportSurface.replaceChildren(renderedRoot);
       viewportSurface.style.width = `${snapshot.viewport.width}px`;
       viewportSurface.style.minHeight = `${snapshot.viewport.documentHeight}px`;
       const snapshotPresence = {
