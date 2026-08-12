@@ -13,27 +13,27 @@
 
   const SAFE_STYLES = Object.freeze([
     "align-content", "align-items", "align-self", "aspect-ratio",
-    "background-color", "border-bottom-color", "border-bottom-left-radius",
+    "background-color", "bottom", "border-bottom-color", "border-bottom-left-radius",
     "border-bottom-right-radius", "border-bottom-style", "border-bottom-width",
     "border-collapse", "border-left-color", "border-left-style",
     "border-left-width", "border-right-color", "border-right-style",
     "border-right-width", "border-spacing", "border-top-color",
     "border-top-left-radius", "border-top-right-radius", "border-top-style",
     "border-top-width", "box-shadow", "box-sizing", "color", "column-gap",
-    "display", "flex-basis", "flex-direction", "flex-grow", "flex-shrink",
+    "clear", "display", "flex-basis", "flex-direction", "flex-grow", "flex-shrink", "float",
     "flex-wrap", "font-family", "font-size", "font-style", "font-weight",
     "gap", "grid-auto-columns", "grid-auto-flow", "grid-auto-rows",
     "grid-column", "grid-row", "grid-template-columns", "grid-template-rows",
-    "height", "justify-content", "justify-items", "justify-self",
+    "height", "justify-content", "justify-items", "justify-self", "left",
     "letter-spacing", "line-height", "margin-bottom", "margin-left",
     "margin-right", "margin-top", "max-height", "max-width", "min-height",
     "min-width", "opacity", "order", "overflow-x", "overflow-y",
     "padding-bottom", "padding-left", "padding-right", "padding-top",
     "place-content", "place-items", "position", "row-gap", "table-layout",
-    "text-align", "text-decoration-color", "text-decoration-line",
-    "text-decoration-style", "text-transform", "text-wrap", "transform",
+    "right", "text-align", "text-decoration-color", "text-decoration-line",
+    "text-decoration-style", "text-indent", "text-transform", "text-wrap", "top", "transform",
     "transform-origin", "vertical-align", "white-space", "width",
-    "word-break"
+    "word-break", "z-index"
   ]);
 
   const UNSUPPORTED_SURFACES = Object.freeze({
@@ -137,7 +137,7 @@
   function validateRenderNode(node, counters = { count: 0, depth: 0 }) {
     if (!node || typeof node !== "object" || Array.isArray(node)) return false;
     counters.count += 1;
-    if (counters.count > 1500 || counters.depth > 35) return false;
+    if (counters.count > 2600 || counters.depth > 50) return false;
 
     if (node.type === "text") {
       return typeof node.text === "string" && node.text.length <= 20000;

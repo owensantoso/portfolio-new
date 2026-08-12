@@ -51,6 +51,7 @@
         const placeholder = receiverDocument.createElement("div");
         placeholder.className = "shared-view-placeholder";
         placeholder.textContent = node.label;
+        applySafeStyles(placeholder, node.styles);
         placeholder.style.width = `${Math.max(48, Number(node.width) || 120)}px`;
         placeholder.style.height = `${Math.max(32, Number(node.height) || 72)}px`;
         return placeholder;
