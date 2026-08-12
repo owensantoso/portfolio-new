@@ -11,7 +11,7 @@
   const ROOM_PATTERN = /^[A-Za-z0-9_-]{22}$/;
   const KEY_PATTERN = /^[A-Za-z0-9_-]{43}$/;
   const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
-  const MAX_CIPHERTEXT_CHARACTERS = 2_000_000;
+  const MAX_CIPHERTEXT_CHARACTERS = 8_000_000;
   const PUBLIC_KEY_PATTERN = /^[A-Za-z0-9_-]{87}$/;
   const interactiveKinds = new Set([
     "host-confirm",
@@ -335,6 +335,9 @@
       new TextEncoder().encode(JSON.stringify(payload))
     );
     envelope.ciphertext = bytesToBase64Url(ciphertext);
+    if (envelope.ciphertext.length > MAX_CIPHERTEXT_CHARACTERS) {
+      throw new Error("The encrypted Shared View update exceeds the message limit.");
+    }
     return envelope;
   }
 
