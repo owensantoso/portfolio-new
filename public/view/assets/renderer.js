@@ -127,8 +127,14 @@
       const height = Math.max(1, currentSnapshot.viewport.height);
       viewportFrame.style.width = `${width}px`;
       viewportFrame.style.aspectRatio = `${width} / ${height}`;
-      const scale = Math.min(1, viewportFrame.clientWidth / width);
+      const fitHeight = Number(viewportFrame.dataset.fitHeight);
+      const scale = Math.min(
+        1,
+        viewportFrame.clientWidth / width,
+        Number.isFinite(fitHeight) && fitHeight > 0 ? fitHeight / height : 1
+      );
       currentScale = scale;
+      viewportFrame.style.width = `${Math.round(width * scale)}px`;
       viewportCanvas.style.width = `${width}px`;
       viewportCanvas.style.height = `${height}px`;
       viewportCanvas.style.transform = `scale(${scale})`;

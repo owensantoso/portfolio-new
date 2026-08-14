@@ -20,6 +20,7 @@ const chatBubbles = document.querySelector("#chatBubbles");
 const chatLauncher = document.querySelector("#chatLauncher");
 const chatComposer = document.querySelector("#chatComposer");
 const chatInput = document.querySelector("#chatInput");
+const viewerShell = document.querySelector(".viewer-shell");
 const stateLabel = document.querySelector("#stateLabel");
 const sourceLabel = document.querySelector("#sourceLabel");
 const diagState = document.querySelector("#diagState");
@@ -96,6 +97,31 @@ function appendChat(chat, displayName) {
 let chatKeyboardBaseline = null;
 let chatKeyboardWasVisible = false;
 
+function fitViewerAroundKeyboard() {
+  const visualViewport = window.visualViewport;
+  const keyboardVisible = Boolean(
+    visualViewport &&
+    window.innerWidth <= 720 &&
+    !chatComposer.hidden &&
+    window.innerHeight - visualViewport.height > 80
+  );
+  if (!keyboardVisible) {
+    delete renderer.viewportFrame.dataset.fitHeight;
+    viewerShell.dataset.keyboardFit = "false";
+    renderer.updateScale();
+    return;
+  }
+  const shellRect = viewerShell.getBoundingClientRect();
+  const shellStyle = getComputedStyle(viewerShell);
+  const verticalPadding = parseFloat(shellStyle.paddingTop) + parseFloat(shellStyle.paddingBottom);
+  const shellTopInsideVisibleArea = Math.max(0, shellRect.top - visualViewport.offsetTop);
+  const availableHeight = Math.max(120, visualViewport.height - shellTopInsideVisibleArea - verticalPadding - 12);
+  renderer.viewportFrame.dataset.animateFit = "true";
+  renderer.viewportFrame.dataset.fitHeight = String(Math.floor(availableHeight));
+  viewerShell.dataset.keyboardFit = "true";
+  renderer.updateScale();
+}
+
 function setChatComposerOpen(open) {
   chatComposer.hidden = !open;
   chatLayer.dataset.open = String(open);
@@ -110,6 +136,7 @@ function setChatComposerOpen(open) {
     chatKeyboardWasVisible = false;
     chatInput.blur();
   }
+  fitViewerAroundKeyboard();
 }
 
 function setChatEnabled(enabled) {
@@ -452,12 +479,16 @@ chatComposer.addEventListener("focusout", () => {
 chatComposer.addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = chatInput.value.trim();
-  if (!text || !interactiveGuest) return;
+  if (!text) {
+    if (window.innerWidth > 720) setChatComposerOpen(false);
+    return;
+  }
+  if (!interactiveGuest) return;
   chatInput.value = "";
-  setChatComposerOpen(false);
   try { await interactiveGuest.sendChat(text); } catch (error) {
     setState("error", "Message was not sent", error.message || String(error));
   }
+  chatInput.focus();
 });
 
 debugButton.addEventListener("click", () => {
@@ -474,10 +505,11 @@ renderer.stopButton.addEventListener("click", () => {
     : "You left this Shared View. The publisher was not stopped.");
 });
 window.addEventListener("resize", () => {
-  renderer.updateScale();
+  fitViewerAroundKeyboard();
   if (exploreEnabled) renderLocalPresence();
 });
 window.visualViewport?.addEventListener("resize", () => {
+  fitViewerAroundKeyboard();
   if (chatComposer.hidden || !chatKeyboardBaseline) return;
   if (window.visualViewport.height < chatKeyboardBaseline - 60) {
     chatKeyboardWasVisible = true;
@@ -485,6 +517,7 @@ window.visualViewport?.addEventListener("resize", () => {
     setChatComposerOpen(false);
   }
 });
+window.visualViewport?.addEventListener("scroll", fitViewerAroundKeyboard);
 
 const interactiveParameters = new URLSearchParams(location.hash.replace(/^#/u, ""));
 if (interactiveParameters.get("v") === "1") {
