@@ -238,6 +238,7 @@ async function startInteractiveJoin() {
   try {
     interactiveGuest = await Transport.createInteractiveGuest({
       inviteUrl: location.href,
+      relayUrl: webSocketUrl(),
       displayName: displayNameInput.value,
       onEvent: handleInteractiveEvent
     });

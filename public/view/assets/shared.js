@@ -368,6 +368,17 @@
     return patch;
   }
 
+  function patchHasRenderableChanges(patch) {
+    return Boolean(
+      patch &&
+      (
+        (Array.isArray(patch.operations) && patch.operations.length > 0) ||
+        patch.fonts !== undefined ||
+        Object.keys(patch.assets || {}).length > 0
+      )
+    );
+  }
+
   function validatePatchPath(path) {
     return Boolean(
       Array.isArray(path) &&
@@ -666,6 +677,7 @@
     normalizeSourceUrl,
     normalizeRemoteAssetUrl,
     normalizeTag,
+    patchHasRenderableChanges,
     sanitizeStyleMap,
     shouldOmitTag,
     unsupportedLabel,

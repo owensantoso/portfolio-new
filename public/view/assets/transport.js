@@ -624,15 +624,16 @@
 
   async function createInteractiveGuest({
     inviteUrl,
+    relayUrl = null,
     displayName = "Guest",
     WebSocketImpl = globalThis.WebSocket,
     onEvent = () => {}
   }) {
     const invitation = await Session.parseInteractiveInvitation(inviteUrl);
-    const relayUrl = new URL("/relay", inviteUrl);
-    relayUrl.protocol = relayUrl.protocol === "https:" ? "wss:" : "ws:";
-    relayUrl.hash = "";
-    const parsedRelayUrl = validateInteractiveRelayUrl(relayUrl.href, WebSocketImpl);
+    const relayCandidate = relayUrl ? new URL(relayUrl) : new URL("/relay", inviteUrl);
+    if (!relayUrl) relayCandidate.protocol = relayCandidate.protocol === "https:" ? "wss:" : "ws:";
+    relayCandidate.hash = "";
+    const parsedRelayUrl = validateInteractiveRelayUrl(relayCandidate.href, WebSocketImpl);
     const guestIdentity = await Session.createInteractiveKeyPair();
     const participantId = Session.randomParticipantId();
     const socketState = createInteractiveSocketState({ parsedRelayUrl, WebSocketImpl, onEvent });
