@@ -257,15 +257,22 @@
     chatEnabledByDefault = false,
     WebSocketImpl = globalThis.WebSocket,
     onEvent = () => {},
-    grantLifetimeMs = 15 * 60 * 1000
+    grantLifetimeMs = 15 * 60 * 1000,
+    reconnectDelayMs = 500,
+    maxReconnectDelayMs = 5000
   }) {
     if (typeof sessionId !== "string" || !sessionId || typeof sourceEpoch !== "string" || !sourceEpoch) {
       throw new Error("The interactive host session context is invalid.");
     }
     const parsedRelayUrl = validateInteractiveRelayUrl(relayUrl, WebSocketImpl);
     const invitation = await Session.createInteractiveInvitation({ viewerBaseUrl, verificationRequired });
+    const resumeToken = Session.randomParticipantId();
     const socketState = createInteractiveSocketState({ parsedRelayUrl, WebSocketImpl, onEvent });
     let connectPromise = null;
+    let reconnectTimer = null;
+    let reconnectAttempt = 0;
+    let hasRegisteredHost = false;
+    let hasConnectedHost = false;
     const pendingParticipants = new Map();
     const participants = new Map();
     let announcedPendingId = null;
@@ -312,7 +319,53 @@
     }
 
     function sendRoomMessage(type, details = {}) {
-      socketState.send({ type, version: 1, roomId: invitation.roomId, ...details });
+      try {
+        socketState.send({ type, version: 1, roomId: invitation.roomId, ...details });
+      } catch (error) {
+        if (!["ended", "removed"].includes(socketState.state)) {
+          scheduleReconnect();
+          socketState.close();
+        }
+        throw error;
+      }
+    }
+
+    function reconcileRelayParticipants(message) {
+      if (!Array.isArray(message.participantIds) || !Array.isArray(message.pendingParticipantIds)) return;
+      const connected = new Set(message.participantIds);
+      const pending = new Set(message.pendingParticipantIds);
+      for (const [participantId, participant] of participants) {
+        if (connected.has(participantId)) continue;
+        clearTimeout(participant.grantTimer);
+        participants.delete(participantId);
+        socketState.emit({
+          type: "participant-left",
+          participantId,
+          displayName: participant.displayName,
+          reason: "disconnected-while-host-paused"
+        });
+      }
+      for (const participantId of pendingParticipants.keys()) {
+        if (!pending.has(participantId)) pendingParticipants.delete(participantId);
+      }
+      if (announcedPendingId && !pendingParticipants.has(announcedPendingId)) announcedPendingId = null;
+      if (activeParticipantId && !participants.has(activeParticipantId)) {
+        activeParticipantId = readyParticipants().at(-1)?.participantId || null;
+      }
+    }
+
+    function scheduleReconnect() {
+      if (["ended", "removed"].includes(socketState.state) || reconnectTimer) return;
+      socketState.setState("reconnecting", { participantCount: readyParticipants().length });
+      const delay = Math.min(
+        Math.max(1, Number(maxReconnectDelayMs) || 5000),
+        Math.max(1, Number(reconnectDelayMs) || 500) * (2 ** Math.min(reconnectAttempt, 4))
+      );
+      reconnectAttempt += 1;
+      reconnectTimer = setTimeout(() => {
+        reconnectTimer = null;
+        connect().catch(() => {});
+      }, delay);
     }
 
     function acceptInboundSequence(participant, kind, sequence) {
@@ -458,10 +511,16 @@
         throw new Error("The relay sent invalid interactive JSON.");
       }
       if (message.type === "interactive-status" && message.roomId === invitation.roomId) {
-        if (["idle", "connecting"].includes(socketState.state)) {
-          socketState.setState("waiting");
-          resolveConnect?.(status());
-        }
+        const resumed = socketState.state === "reconnecting" || message.resumed === true;
+        reconcileRelayParticipants(message);
+        hasConnectedHost = true;
+        reconnectAttempt = 0;
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+        socketState.setState("waiting");
+        refreshAggregateState();
+        resolveConnect?.(status());
+        if (resumed) socketState.emit({ type: "reconnected", participantCount: readyParticipants().length });
         return;
       }
       if (message.type === "interactive-join" && message.roomId === invitation.roomId) {
@@ -503,18 +562,34 @@
       if (message.type === "room-error") {
         const error = new Error(`Interactive relay error: ${message.code || "unknown"}`);
         socketState.emit({ type: "error", code: message.code || "relay-error", error });
+        if (hasConnectedHost && ["room-not-found", "host-auth-failed", "invalid-resume-token"].includes(message.code)) {
+          clearTimeout(reconnectTimer);
+          reconnectTimer = null;
+          for (const participant of participants.values()) clearTimeout(participant.grantTimer);
+          socketState.setState("ended", { reason: message.code });
+          socketState.close();
+        }
         rejectConnect?.(error);
       }
     }
 
     function connect() {
       if (connectPromise) return connectPromise;
-      socketState.setState("connecting");
+      if (["ended", "removed"].includes(socketState.state)) {
+        return Promise.reject(new Error("This interactive Shared View room has ended."));
+      }
+      socketState.setState(hasConnectedHost ? "reconnecting" : "connecting", { participantCount: readyParticipants().length });
       connectPromise = new Promise((resolve, reject) => {
         const socket = new WebSocketImpl(parsedRelayUrl.href);
         socketState.install(socket);
         socket.addEventListener("open", () => {
-          sendRoomMessage("interactive-host", { hostPublicKey: invitation.hostPublicKeyText });
+          const resume = hasRegisteredHost;
+          sendRoomMessage("interactive-host", {
+            hostPublicKey: invitation.hostPublicKeyText,
+            resumeToken,
+            resume
+          });
+          hasRegisteredHost = true;
         });
         socket.addEventListener("message", (event) => {
           handleMessage(event, resolve, reject).catch((error) => {
@@ -524,7 +599,9 @@
         });
         socket.addEventListener("error", () => reject(new Error("The interactive relay connection failed.")));
         socket.addEventListener("close", () => {
-          if (!["ended", "removed"].includes(socketState.state)) socketState.setState("disconnected");
+          if (socketState.socket !== socket) return;
+          connectPromise = null;
+          if (!["ended", "removed"].includes(socketState.state)) scheduleReconnect();
         });
       });
       return connectPromise;
@@ -684,6 +761,8 @@
 
     function end(reason = "stopped") {
       if (socketState.state === "ended") return;
+      clearTimeout(reconnectTimer);
+      reconnectTimer = null;
       for (const participant of participants.values()) clearTimeout(participant.grantTimer);
       try { sendRoomMessage("room-end", { reason: String(reason).slice(0, 80) }); } catch (_error) {}
       socketState.setState("ended", { reason });
@@ -886,6 +965,16 @@
           verificationRequired: invitation.verificationRequired
         });
         if (!invitation.verificationRequired) await confirmPairing();
+        return;
+      }
+      if (message.type === "interactive-status" && message.roomId === invitation.roomId) {
+        if (message.hostConnected === false) {
+          socketState.setState("paused", { participantId });
+          socketState.emit({ type: "host-paused" });
+        } else if (socketState.state === "paused" && currentGrant) {
+          socketState.setState("ready", { participantId });
+          socketState.emit({ type: "host-resumed" });
+        }
         return;
       }
       if (message.type === "interactive-envelope") {

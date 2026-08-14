@@ -241,6 +241,14 @@ function handleInteractiveEvent(event) {
     appendChat(event.chat, event.chat.sender === "guest" ? "You" : "Host");
     return;
   }
+  if (event.type === "host-paused") {
+    setState("paused", "Host temporarily paused", "Safari interrupted the host connection. The last frame remains visible while it reconnects.");
+    return;
+  }
+  if (event.type === "host-resumed") {
+    setState("ready", "Host reconnected", "Waiting for the host's refreshed view.");
+    return;
+  }
   if (event.type === "removed") {
     clearInterval(countdownTimer);
     setChatEnabled(false);

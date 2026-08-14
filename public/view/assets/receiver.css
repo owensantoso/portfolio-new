@@ -166,4 +166,11 @@ main { width: min(1120px, calc(100% - 44px)); margin: 22px auto; }
   .diagnostics { grid-template-columns: repeat(2, 1fr); }
   .pairing-card { grid-template-columns: 1fr; }
   .interaction-row { grid-template-columns: 1fr; }
+  .chat-layer {
+    top: 12px; right: 12px; bottom: auto; left: auto;
+    display: flex; flex-direction: column; align-items: flex-end;
+  }
+  .chat-launcher { order: 1; margin-left: auto; }
+  .chat-composer { order: 2; width: 100%; }
+  .chat-bubbles { order: 3; justify-items: end; width: 100%; margin: 6px 0 0; }
 }
