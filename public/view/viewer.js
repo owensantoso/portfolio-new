@@ -23,6 +23,8 @@ const chatInput = document.querySelector("#chatInput");
 const viewerShell = document.querySelector(".viewer-shell");
 const viewerStage = document.querySelector("#viewerStage");
 const projectionLabel = document.querySelector("#projectionLabel");
+const projectionChrome = document.querySelector(".projection-chrome");
+const stateDot = document.querySelector("#stateDot");
 const stateLabel = document.querySelector("#stateLabel");
 const sourceLabel = document.querySelector("#sourceLabel");
 const diagState = document.querySelector("#diagState");
@@ -41,6 +43,7 @@ let grantExpiry = 0;
 let countdownTimer = null;
 let hostDisplayName = "Owen";
 let chatOpenScrollPosition = null;
+let mobileKeyboardWasVisible = false;
 let keyboardFitRecoveryTimer = null;
 let keyboardFitRecoveryVersion = 0;
 const MAX_CHAT_HISTORY = 100;
@@ -83,6 +86,17 @@ function setState(state, title, message) {
   diagState.textContent = state;
   stateLabel.textContent = title;
   sourceLabel.textContent = message;
+}
+
+function setProjectionConnectionState(state) {
+  viewerStage.dataset.connectionState = state;
+  const labels = {
+    live: `Live shared view from ${hostDisplayName}`,
+    paused: `Paused shared view from ${hostDisplayName}; the last frame is frozen`,
+    waiting: `Waiting for ${hostDisplayName}'s shared view`,
+    ended: `Ended shared view from ${hostDisplayName}`
+  };
+  projectionChrome.setAttribute("aria-label", labels[state] || labels.waiting);
 }
 
 function appendChat(chat, displayName) {
@@ -145,32 +159,46 @@ function scheduleKeyboardFitRecovery() {
 
 function fitViewerAroundKeyboard() {
   const visualViewport = window.visualViewport;
+  const mobileChatOpen = window.innerWidth <= 720 && !chatComposer.hidden;
   const keyboardVisible = Boolean(
     visualViewport &&
-    window.innerWidth <= 720 &&
-    !chatComposer.hidden &&
+    mobileChatOpen &&
     window.innerHeight - visualViewport.height > 80
   );
-  if (!keyboardVisible) {
+  if (!mobileChatOpen) {
     const wasKeyboardFit = viewerStage.dataset.keyboardFit === "true";
+    mobileKeyboardWasVisible = false;
     delete renderer.viewportFrame.dataset.fitHeight;
     viewerStage.dataset.keyboardFit = "false";
-    chatLayer.dataset.layout = "overlay";
+    delete chatLayer.dataset.layout;
     renderer.updateScale();
     if (wasKeyboardFit) scheduleKeyboardFitRecovery();
     return;
   }
-  keyboardFitRecoveryVersion += 1;
-  clearTimeout(keyboardFitRecoveryTimer);
   viewerStage.dataset.keyboardFit = "true";
   chatLayer.dataset.layout = "sidecar";
+  if (!keyboardVisible) {
+    if (mobileKeyboardWasVisible) {
+      mobileKeyboardWasVisible = false;
+      setChatComposerOpen(false);
+      return;
+    }
+    delete renderer.viewportFrame.dataset.fitHeight;
+    renderer.updateScale();
+    return;
+  }
+  mobileKeyboardWasVisible = true;
+  keyboardFitRecoveryVersion += 1;
+  clearTimeout(keyboardFitRecoveryTimer);
   const shellRect = viewerShell.getBoundingClientRect();
   const shellStyle = getComputedStyle(viewerShell);
   const verticalPadding = parseFloat(shellStyle.paddingTop) + parseFloat(shellStyle.paddingBottom)
     + parseFloat(shellStyle.borderTopWidth) + parseFloat(shellStyle.borderBottomWidth);
-  const fixedPhoneChrome = viewerShell.querySelector(".projection-chrome")?.offsetHeight || 0;
+  const phoneChrome = viewerShell.querySelector(".projection-chrome");
+  const fixedPhoneChrome = phoneChrome && getComputedStyle(phoneChrome).position !== "absolute" ? phoneChrome.offsetHeight : 0;
   const homeIndicator = viewerShell.querySelector(".phone-home-indicator");
   const fixedPhoneFooter = homeIndicator && getComputedStyle(homeIndicator).display !== "none"
+    && getComputedStyle(homeIndicator).position !== "absolute"
     ? homeIndicator.offsetHeight + 12
     : 0;
   const shellTopInsideVisibleArea = Math.max(0, shellRect.top - visualViewport.offsetTop);
@@ -191,26 +219,7 @@ function updateProjectionPresentation() {
   const phoneLike = isPhoneLikeViewport(renderer.getViewportMetrics());
   viewerStage.dataset.device = phoneLike ? "phone" : "screen";
   projectionLabel.textContent = hostDisplayName;
-}
-
-function positionMobileChat() {
-  if (window.innerWidth > 720 || chatComposer.hidden) return;
-  if (chatLayer.dataset.layout === "sidecar") {
-    chatLayer.style.removeProperty("--chat-visual-top");
-    chatLayer.style.removeProperty("--chat-visual-right");
-    chatLayer.style.removeProperty("--chat-visual-width");
-    return;
-  }
-  const visualViewport = window.visualViewport;
-  const visualTop = Math.max(8, (visualViewport?.offsetTop || 0) + 10);
-  const visualRight = Math.max(
-    10,
-    window.innerWidth - ((visualViewport?.offsetLeft || 0) + (visualViewport?.width || window.innerWidth)) + 10
-  );
-  const visualWidth = Math.max(220, visualViewport?.width || window.innerWidth);
-  chatLayer.style.setProperty("--chat-visual-top", `${visualTop}px`);
-  chatLayer.style.setProperty("--chat-visual-right", `${visualRight}px`);
-  chatLayer.style.setProperty("--chat-visual-width", `${visualWidth}px`);
+  setProjectionConnectionState(viewerStage.dataset.connectionState || "waiting");
 }
 
 function setChatComposerOpen(open) {
@@ -220,26 +229,25 @@ function setChatComposerOpen(open) {
   chatLauncher.setAttribute("aria-expanded", String(open));
   chatLauncher.setAttribute("aria-label", open ? "Close chat" : "Open chat");
   if (open) {
-    positionMobileChat();
+    if (window.innerWidth <= 720) {
+      viewerStage.dataset.keyboardFit = "true";
+      chatLayer.dataset.layout = "sidecar";
+      renderer.updateScale();
+    }
     chatInput.focus({ preventScroll: true });
     const restorePosition = chatOpenScrollPosition;
     if (restorePosition) {
       requestAnimationFrame(() => {
         window.scrollTo(restorePosition.x, restorePosition.y);
-        positionMobileChat();
         fitViewerAroundKeyboard();
       });
     }
   } else {
     chatInput.blur();
     chatOpenScrollPosition = null;
-    chatLayer.dataset.layout = "overlay";
-    chatLayer.style.removeProperty("--chat-visual-top");
-    chatLayer.style.removeProperty("--chat-visual-right");
-    chatLayer.style.removeProperty("--chat-visual-width");
+    delete chatLayer.dataset.layout;
   }
   fitViewerAroundKeyboard();
-  positionMobileChat();
 }
 
 function setChatEnabled(enabled) {
@@ -335,6 +343,7 @@ function handleInteractiveEvent(event) {
     setChatComposerOpen(false);
     chatLayer.dataset.disconnected = "true";
     chatLauncher.disabled = true;
+    setProjectionConnectionState("ended");
     renderer.showEnded(event.state === "disconnected"
       ? "Connection lost. This is the last received frame and it is no longer live."
       : "The host ended this Shared View. The last inert frame remains visible.");
@@ -364,6 +373,7 @@ function handleInteractiveEvent(event) {
   }
   if (event.type === "snapshot") {
     renderer.renderSnapshot(event.snapshot, { updatesPerSecond: updateRate() });
+    setProjectionConnectionState("live");
     updateProjectionPresentation();
     clampLocalViewport();
     if (exploreEnabled) renderLocalPresence();
@@ -375,6 +385,7 @@ function handleInteractiveEvent(event) {
       interactiveGuest?.leave();
       return;
     }
+    setProjectionConnectionState("live");
     clampLocalViewport();
     if (exploreEnabled) renderLocalPresence();
     return;
@@ -388,10 +399,19 @@ function handleInteractiveEvent(event) {
     return;
   }
   if (event.type === "host-paused") {
+    setChatComposerOpen(false);
+    chatLayer.dataset.disconnected = "paused";
+    chatLauncher.disabled = true;
+    stateDot.className = "state-dot paused";
+    setProjectionConnectionState("paused");
     setState("paused", "Host temporarily paused", "Safari interrupted the host connection. The last frame remains visible while it reconnects.");
     return;
   }
   if (event.type === "host-resumed") {
+    delete chatLayer.dataset.disconnected;
+    chatLauncher.disabled = !interactiveCapabilities.has("chat.send");
+    stateDot.className = "state-dot";
+    setProjectionConnectionState("waiting");
     setState("ready", "Host reconnected", "Waiting for the host's refreshed view.");
     return;
   }
@@ -621,16 +641,13 @@ renderer.stopButton.addEventListener("click", () => {
 });
 window.addEventListener("resize", () => {
   fitViewerAroundKeyboard();
-  positionMobileChat();
   if (exploreEnabled) renderLocalPresence();
 });
 window.visualViewport?.addEventListener("resize", () => {
   fitViewerAroundKeyboard();
-  positionMobileChat();
 });
 window.visualViewport?.addEventListener("scroll", () => {
   fitViewerAroundKeyboard();
-  positionMobileChat();
 });
 
 const interactiveParameters = new URLSearchParams(location.hash.replace(/^#/u, ""));
