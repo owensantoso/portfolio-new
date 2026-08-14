@@ -41,6 +41,8 @@ let grantExpiry = 0;
 let countdownTimer = null;
 let hostDisplayName = "Owen";
 let chatOpenScrollPosition = null;
+let keyboardFitRecoveryTimer = null;
+let keyboardFitRecoveryVersion = 0;
 const MAX_CHAT_HISTORY = 100;
 const legacyUsage = { sentBytes: 0, receivedBytes: 0, sentMessages: 0, receivedMessages: 0 };
 
@@ -87,7 +89,6 @@ function appendChat(chat, displayName) {
   const bubble = document.createElement("div");
   const messageSide = chat.sender === "guest" ? "local" : "remote";
   bubble.className = `chat-bubble ${messageSide}`;
-  bubble.dataset.preview = "true";
   const message = document.createElement("span");
   message.textContent = chat.text;
   if (messageSide === "remote") {
@@ -97,19 +98,49 @@ function appendChat(chat, displayName) {
   }
   bubble.append(message);
   chatBubbles.appendChild(bubble);
+  chatLayer.dataset.hasHistory = "true";
   while (chatBubbles.children.length > MAX_CHAT_HISTORY) chatBubbles.firstElementChild?.remove();
   chatBubbles.scrollTop = chatBubbles.scrollHeight;
-  setTimeout(() => {
-    if (!chatComposer.hidden) {
-      bubble.dataset.preview = "false";
-      return;
-    }
-    bubble.dataset.leaving = "true";
-    setTimeout(() => {
-      bubble.dataset.preview = "false";
-      delete bubble.dataset.leaving;
-    }, 180);
-  }, 6_000);
+}
+
+function scheduleKeyboardFitRecovery() {
+  const version = ++keyboardFitRecoveryVersion;
+  clearTimeout(keyboardFitRecoveryTimer);
+  let recovered = false;
+  const recover = () => {
+    if (recovered || version !== keyboardFitRecoveryVersion) return;
+    recovered = true;
+    clearTimeout(keyboardFitRecoveryTimer);
+    viewerShell.removeEventListener("transitionend", handleTransitionEnd);
+    const frame = renderer.viewportFrame;
+    const canvas = frame.querySelector(".viewport-canvas");
+    const previousWidth = frame.style.width;
+    const previousHeight = frame.style.height;
+    const previousTransform = canvas?.style.transform || "";
+    delete frame.dataset.animateFit;
+    renderer.updateScale();
+    const targetWidth = frame.style.width;
+    const targetHeight = frame.style.height;
+    const targetTransform = canvas?.style.transform || "";
+    frame.style.width = previousWidth;
+    frame.style.height = previousHeight;
+    if (canvas) canvas.style.transform = previousTransform;
+    void frame.offsetWidth;
+    frame.dataset.animateFit = "true";
+    requestAnimationFrame(() => {
+      if (version !== keyboardFitRecoveryVersion) return;
+      frame.style.width = targetWidth;
+      frame.style.height = targetHeight;
+      if (canvas) canvas.style.transform = targetTransform;
+    });
+  };
+  const handleTransitionEnd = (event) => {
+    if (event.target === viewerShell && event.propertyName === "width") recover();
+  };
+  viewerShell.addEventListener("transitionend", handleTransitionEnd);
+  keyboardFitRecoveryTimer = setTimeout(() => {
+    recover();
+  }, 320);
 }
 
 function fitViewerAroundKeyboard() {
@@ -121,12 +152,16 @@ function fitViewerAroundKeyboard() {
     window.innerHeight - visualViewport.height > 80
   );
   if (!keyboardVisible) {
+    const wasKeyboardFit = viewerStage.dataset.keyboardFit === "true";
     delete renderer.viewportFrame.dataset.fitHeight;
     viewerStage.dataset.keyboardFit = "false";
     chatLayer.dataset.layout = "overlay";
     renderer.updateScale();
+    if (wasKeyboardFit) scheduleKeyboardFitRecovery();
     return;
   }
+  keyboardFitRecoveryVersion += 1;
+  clearTimeout(keyboardFitRecoveryTimer);
   viewerStage.dataset.keyboardFit = "true";
   chatLayer.dataset.layout = "sidecar";
   const shellRect = viewerShell.getBoundingClientRect();
@@ -209,9 +244,12 @@ function setChatComposerOpen(open) {
 
 function setChatEnabled(enabled) {
   chatLayer.hidden = !enabled;
+  chatLauncher.disabled = !enabled;
+  delete chatLayer.dataset.disconnected;
   if (!enabled) {
     setChatComposerOpen(false);
     chatBubbles.replaceChildren();
+    chatLayer.dataset.hasHistory = "false";
   }
 }
 
@@ -290,6 +328,16 @@ function scheduleGuestPresence() {
 function handleInteractiveEvent(event) {
   if (event.type === "usage") {
     renderer.renderUsage(event.usage);
+    return;
+  }
+  if (event.type === "status" && ["disconnected", "ended"].includes(event.state)) {
+    clearInterval(countdownTimer);
+    setChatComposerOpen(false);
+    chatLayer.dataset.disconnected = "true";
+    chatLauncher.disabled = true;
+    renderer.showEnded(event.state === "disconnected"
+      ? "Connection lost. This is the last received frame and it is no longer live."
+      : "The host ended this Shared View. The last inert frame remains visible.");
     return;
   }
   if (event.type === "pairing") {
