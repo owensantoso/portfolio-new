@@ -254,6 +254,7 @@
     sessionId,
     sourceEpoch,
     verificationRequired = true,
+    chatEnabledByDefault = false,
     WebSocketImpl = globalThis.WebSocket,
     onEvent = () => {},
     grantLifetimeMs = 15 * 60 * 1000
@@ -265,28 +266,48 @@
     const invitation = await Session.createInteractiveInvitation({ viewerBaseUrl, verificationRequired });
     const socketState = createInteractiveSocketState({ parsedRelayUrl, WebSocketImpl, onEvent });
     let connectPromise = null;
-    let pendingParticipant = null;
-    let participant = null;
-    let currentGrant = null;
-    let grantTimer = null;
-    let hostConfirmed = false;
-    let guestConfirmed = false;
-    let hostConfirmationSequence = 0;
-    let grantSequence = 0;
-    let hostChatSequence = 0;
-    let encryptedSendQueue = Promise.resolve();
-    const capabilities = new Set(["view.receive"]);
-    const lastInboundSequence = new Map();
+    const pendingParticipants = new Map();
+    const participants = new Map();
+    let announcedPendingId = null;
+    let activeParticipantId = null;
+    const capabilities = new Set(["view.receive", ...(chatEnabledByDefault ? ["chat.send"] : [])]);
+
+    function readyParticipants() {
+      return [...participants.values()].filter((participant) => participant.state === "ready" && participant.currentGrant);
+    }
+
+    function pairingParticipant() {
+      return [...participants.values()].find((participant) => participant.state === "pairing") || null;
+    }
+
+    function activeParticipant() {
+      return participants.get(activeParticipantId) || pairingParticipant() || readyParticipants().at(-1) || null;
+    }
+
+    function pendingParticipant() {
+      return pendingParticipants.get(announcedPendingId) || pendingParticipants.values().next().value || null;
+    }
 
     function status() {
+      const pending = pendingParticipant();
+      const active = activeParticipant();
+      const ready = readyParticipants();
       return Object.freeze({
         state: socketState.state,
         roomId: invitation.roomId,
-        participantId: participant?.participantId || pendingParticipant?.participantId || null,
-        displayName: participant?.displayName || pendingParticipant?.displayName || null,
+        participantId: pending?.participantId || active?.participantId || null,
+        displayName: pending?.displayName || active?.displayName || null,
+        participantCount: ready.length,
+        pendingCount: pendingParticipants.size,
+        participants: [...participants.values()].map((participant) => ({
+          participantId: participant.participantId,
+          displayName: participant.displayName,
+          state: participant.state,
+          capabilities: participant.currentGrant ? [...participant.currentGrant.capabilities] : []
+        })),
         verificationRequired: invitation.verificationRequired,
         usage: socketState.usage(),
-        capabilities: currentGrant ? [...currentGrant.capabilities] : []
+        capabilities: ready.length ? [...capabilities] : []
       });
     }
 
@@ -294,20 +315,20 @@
       socketState.send({ type, version: 1, roomId: invitation.roomId, ...details });
     }
 
-    function acceptInboundSequence(kind, sequence) {
-      const last = lastInboundSequence.get(kind) || 0;
+    function acceptInboundSequence(participant, kind, sequence) {
+      const last = participant.lastInboundSequence.get(kind) || 0;
       if (!Number.isInteger(sequence) || sequence <= last) return false;
-      lastInboundSequence.set(kind, sequence);
+      participant.lastInboundSequence.set(kind, sequence);
       return true;
     }
 
-    function currentGrantAllows(capability, payload = null) {
-      return Contract.capabilityGrantAllows(currentGrant, capability, payload);
+    function currentGrantAllows(participant, capability, payload = null) {
+      return Contract.capabilityGrantAllows(participant?.currentGrant, capability, payload);
     }
 
-    function sendEncrypted(kind, payload) {
-      encryptedSendQueue = encryptedSendQueue.then(async () => {
-        if (!participant?.secrets) throw new Error("The interactive participant is not paired.");
+    function sendEncrypted(participant, kind, payload) {
+      participant.sendQueue = participant.sendQueue.catch(() => {}).then(async () => {
+        if (!participant.secrets) throw new Error("The interactive participant is not paired.");
         const envelope = await Session.encryptInteractive({
           payload,
           roomId: invitation.roomId,
@@ -318,18 +339,45 @@
         sendRoomMessage("interactive-envelope", { participantId: participant.participantId, envelope });
         return envelope;
       });
-      return encryptedSendQueue;
+      return participant.sendQueue;
     }
 
-    function scheduleGrantExpiry(grant) {
-      clearTimeout(grantTimer);
-      grantTimer = setTimeout(() => {
-        if (currentGrant?.grantId === grant.grantId) removeGuest("grant-expired").catch(() => end("grant-expired"));
+    function refreshAggregateState() {
+      const ready = readyParticipants();
+      const pairing = pairingParticipant();
+      if (ready.length) socketState.setState("ready", { participantCount: ready.length });
+      else if (pairing) socketState.setState("pairing", { participantId: pairing.participantId });
+      else if (announcedPendingId) socketState.setState("pending", { participantId: announcedPendingId });
+      else if (!["connecting", "disconnected", "ended"].includes(socketState.state)) socketState.setState("waiting");
+    }
+
+    function announceNextPending() {
+      if (announcedPendingId || pairingParticipant()) {
+        refreshAggregateState();
+        return;
+      }
+      const pending = pendingParticipants.values().next().value;
+      if (!pending) {
+        refreshAggregateState();
+        return;
+      }
+      announcedPendingId = pending.participantId;
+      activeParticipantId = pending.participantId;
+      refreshAggregateState();
+      socketState.emit({ type: "admission-request", ...pending });
+    }
+
+    function scheduleGrantExpiry(participant, grant) {
+      clearTimeout(participant.grantTimer);
+      participant.grantTimer = setTimeout(() => {
+        if (participant.currentGrant?.grantId === grant.grantId) {
+          removeGuest("grant-expired", participant.participantId).catch(() => end("grant-expired"));
+        }
       }, Math.max(1, grant.expiresAt - Date.now()));
     }
 
-    async function issueGrant() {
-      if (!participant?.secrets || !hostConfirmed || !guestConfirmed) {
+    async function issueGrant(participant) {
+      if (!participant?.secrets || !participant.hostConfirmed || !participant.guestConfirmed) {
         throw new Error("Pairing must be confirmed before granting capabilities.");
       }
       const issuedAt = Date.now();
@@ -338,33 +386,37 @@
         version: 1,
         sessionId,
         participantId: participant.participantId,
-        sequence: ++grantSequence,
+        sequence: ++participant.grantSequence,
         issuedAt,
         expiresAt: issuedAt + Math.min(30 * 60 * 1000, Math.max(1000, grantLifetimeMs)),
         sourceEpoch,
         grantId: Session.randomParticipantId(),
         capabilities: Contract.INTERACTIVE_CAPABILITIES.filter((capability) => capabilities.has(capability))
       };
-      await sendEncrypted("grant", grant);
-      currentGrant = grant;
-      scheduleGrantExpiry(grant);
-      socketState.setState("ready", { participantId: participant.participantId });
-      socketState.emit({ type: "grant", grant, capabilities: [...grant.capabilities] });
+      await sendEncrypted(participant, "grant", grant);
+      participant.currentGrant = grant;
+      participant.state = "ready";
+      scheduleGrantExpiry(participant, grant);
+      refreshAggregateState();
+      socketState.emit({ type: "grant", participantId: participant.participantId, grant, capabilities: [...grant.capabilities] });
       return grant;
     }
 
-    async function maybeBecomeReady() {
-      if (!hostConfirmed || !guestConfirmed || currentGrant) return;
-      await issueGrant();
+    async function maybeBecomeReady(participant) {
+      if (!participant.hostConfirmed || !participant.guestConfirmed || participant.currentGrant) return;
+      await issueGrant(participant);
+      activeParticipantId = participant.participantId;
       socketState.emit({ type: "ready", participantId: participant.participantId, displayName: participant.displayName });
+      announceNextPending();
     }
 
     async function handleInteractiveEnvelope(message) {
-      if (!participant?.secrets || message.participantId !== participant.participantId) return;
+      const participant = participants.get(message.participantId);
+      if (!participant?.secrets) return;
       const { kind, sequence } = message.envelope || {};
       if (!["guest-confirm", "guest-presence", "guest-chat"].includes(kind)) return;
-      if (!acceptInboundSequence(kind, sequence)) {
-        socketState.emit({ type: "denied", code: "replay", kind });
+      if (!acceptInboundSequence(participant, kind, sequence)) {
+        socketState.emit({ type: "denied", participantId: participant.participantId, code: "replay", kind });
         return;
       }
       const payload = await Session.decryptInteractive({
@@ -376,25 +428,25 @@
       });
       if (kind === "guest-confirm") {
         if (payload.sessionId !== sessionId) throw new Error("The guest confirmed the wrong session.");
-        guestConfirmed = true;
-        socketState.emit({ type: "pairing-confirmed", role: "guest" });
-        await maybeBecomeReady();
+        participant.guestConfirmed = true;
+        socketState.emit({ type: "pairing-confirmed", participantId: participant.participantId, role: "guest" });
+        await maybeBecomeReady(participant);
         return;
       }
       if (kind === "guest-presence") {
-        const presence = Contract.decodeGuestPresence(payload, currentGrant);
-        if (!presence || !currentGrantAllows("presence.publish", presence)) {
-          socketState.emit({ type: "denied", code: "capability-denied", kind });
+        const presence = Contract.decodeGuestPresence(payload, participant.currentGrant);
+        if (!presence || !currentGrantAllows(participant, "presence.publish", presence)) {
+          socketState.emit({ type: "denied", participantId: participant.participantId, code: "capability-denied", kind });
           return;
         }
-        socketState.emit({ type: "guest-presence", presence, displayName: participant.displayName });
+        socketState.emit({ type: "guest-presence", participantId: participant.participantId, presence, displayName: participant.displayName });
         return;
       }
-      if (!currentGrantAllows("chat.send", payload)) {
-        socketState.emit({ type: "denied", code: "capability-denied", kind });
+      if (!currentGrantAllows(participant, "chat.send", payload)) {
+        socketState.emit({ type: "denied", participantId: participant.participantId, code: "capability-denied", kind });
         return;
       }
-      socketState.emit({ type: "chat", chat: payload, displayName: participant.displayName });
+      socketState.emit({ type: "chat", participantId: participant.participantId, chat: payload, displayName: participant.displayName });
     }
 
     async function handleMessage(event, resolveConnect, rejectConnect) {
@@ -413,17 +465,29 @@
         return;
       }
       if (message.type === "interactive-join" && message.roomId === invitation.roomId) {
-        if (pendingParticipant || participant) {
-          sendRoomMessage("interactive-deny", { participantId: message.participantId });
-          return;
-        }
-        pendingParticipant = {
+        if (pendingParticipants.has(message.participantId) || participants.has(message.participantId)) return;
+        pendingParticipants.set(message.participantId, {
           participantId: message.participantId,
           guestPublicKey: message.guestPublicKey,
           displayName: String(message.displayName || "Guest").slice(0, 40)
-        };
-        socketState.setState("pending", { participantId: pendingParticipant.participantId });
-        socketState.emit({ type: "admission-request", ...pendingParticipant });
+        });
+        announceNextPending();
+        return;
+      }
+      if (message.type === "interactive-left" && message.roomId === invitation.roomId) {
+        const pending = pendingParticipants.get(message.participantId);
+        const participant = participants.get(message.participantId);
+        if (participant) clearTimeout(participant.grantTimer);
+        pendingParticipants.delete(message.participantId);
+        participants.delete(message.participantId);
+        if (announcedPendingId === message.participantId) announcedPendingId = null;
+        if (activeParticipantId === message.participantId) activeParticipantId = readyParticipants().at(-1)?.participantId || null;
+        socketState.emit({
+          type: "participant-left",
+          participantId: message.participantId,
+          displayName: participant?.displayName || pending?.displayName || "Guest"
+        });
+        announceNextPending();
         return;
       }
       if (message.type === "interactive-envelope") {
@@ -431,7 +495,7 @@
         return;
       }
       if (message.type === "room-ended") {
-        clearTimeout(grantTimer);
+        for (const participant of participants.values()) clearTimeout(participant.grantTimer);
         socketState.setState("ended", { reason: message.reason || "stopped" });
         socketState.close();
         return;
@@ -467,26 +531,44 @@
     }
 
     async function approve(participantId) {
-      if (!pendingParticipant || pendingParticipant.participantId !== participantId) {
+      const pending = pendingParticipants.get(participantId);
+      if (!pending) {
         throw new Error("That interactive participant is not pending.");
       }
+      if (pairingParticipant()) throw new Error("Finish the current pairing before approving another guest.");
       const secrets = await Session.deriveInteractiveSecrets({
         privateKey: invitation.hostKeyPair.privateKey,
-        peerPublicKeyText: pendingParticipant.guestPublicKey,
+        peerPublicKeyText: pending.guestPublicKey,
         roomId: invitation.roomId,
         hostPublicKeyText: invitation.hostPublicKeyText,
-        guestPublicKeyText: pendingParticipant.guestPublicKey,
+        guestPublicKeyText: pending.guestPublicKey,
         role: "host"
       });
-      participant = { ...pendingParticipant, secrets };
-      pendingParticipant = null;
+      const participant = {
+        ...pending,
+        secrets,
+        state: "pairing",
+        currentGrant: null,
+        grantTimer: null,
+        hostConfirmed: false,
+        guestConfirmed: false,
+        hostConfirmationSequence: 0,
+        grantSequence: 0,
+        hostChatSequence: 0,
+        sendQueue: Promise.resolve(),
+        lastInboundSequence: new Map()
+      };
+      pendingParticipants.delete(participantId);
+      participants.set(participantId, participant);
+      if (announcedPendingId === participantId) announcedPendingId = null;
+      activeParticipantId = participantId;
       sendRoomMessage("interactive-approve", {
         participantId,
         sessionId,
         sourceEpoch,
         verificationRequired: invitation.verificationRequired
       });
-      socketState.setState("pairing", { participantId });
+      refreshAggregateState();
       socketState.emit({
         type: "pairing",
         participantId,
@@ -504,100 +586,105 @@
     }
 
     function deny(participantId) {
-      if (!pendingParticipant || pendingParticipant.participantId !== participantId) return false;
+      if (!pendingParticipants.has(participantId)) return false;
       sendRoomMessage("interactive-deny", { participantId });
-      pendingParticipant = null;
-      socketState.setState("waiting");
+      pendingParticipants.delete(participantId);
+      if (announcedPendingId === participantId) announcedPendingId = null;
+      announceNextPending();
       return true;
     }
 
-    async function confirmPairing() {
-      if (!participant?.secrets || socketState.state !== "pairing") throw new Error("No participant is waiting for pairing confirmation.");
+    async function confirmPairing(participantId = activeParticipantId) {
+      const participant = participants.get(participantId);
+      if (!participant?.secrets || participant.state !== "pairing") throw new Error("No participant is waiting for pairing confirmation.");
       const confirmation = {
         type: "shared-view-pairing-confirmation",
         version: 1,
         sessionId,
         participantId: participant.participantId,
-        sequence: ++hostConfirmationSequence,
+        sequence: ++participant.hostConfirmationSequence,
         confirmedAt: Date.now(),
         role: "host"
       };
-      await sendEncrypted("host-confirm", confirmation);
-      hostConfirmed = true;
-      socketState.emit({ type: "pairing-confirmed", role: "host" });
-      await maybeBecomeReady();
+      await sendEncrypted(participant, "host-confirm", confirmation);
+      participant.hostConfirmed = true;
+      socketState.emit({ type: "pairing-confirmed", participantId, role: "host" });
+      await maybeBecomeReady(participant);
     }
 
     async function setCapability(capability, enabled) {
       if (capability === "view.receive") throw new Error("View access ends only by removing the guest.");
       if (!Contract.INTERACTIVE_CAPABILITIES.includes(capability)) throw new Error("The capability is unsupported.");
-      if (socketState.state !== "ready") throw new Error("The interactive participant is not ready.");
+      const ready = readyParticipants();
+      if (!ready.length) throw new Error("No interactive participant is ready.");
       if (enabled) capabilities.add(capability);
       else capabilities.delete(capability);
-      return issueGrant();
+      return Promise.all(ready.map((participant) => issueGrant(participant)));
     }
 
     async function publish(snapshot) {
-      if (socketState.state !== "ready" || !currentGrantAllows("view.receive")) {
-        throw new Error("The interactive participant is not ready for snapshots.");
-      }
+      const ready = readyParticipants().filter((participant) => currentGrantAllows(participant, "view.receive"));
+      if (!ready.length) throw new Error("Interactive participants are not ready for snapshots.");
       if (snapshot.sessionId !== sessionId) throw new Error("The snapshot belongs to another session.");
-      return sendEncrypted("snapshot", snapshot);
+      return Promise.all(ready.map((participant) => sendEncrypted(participant, "snapshot", snapshot)));
     }
 
     async function publishPatch(patch) {
-      if (socketState.state !== "ready" || !currentGrantAllows("view.receive")) {
-        throw new Error("The interactive participant is not ready for patches.");
-      }
+      const ready = readyParticipants().filter((participant) => currentGrantAllows(participant, "view.receive"));
+      if (!ready.length) throw new Error("Interactive participants are not ready for patches.");
       if (patch.sessionId !== sessionId) throw new Error("The patch belongs to another session.");
-      return sendEncrypted("patch", patch);
+      return Promise.all(ready.map((participant) => sendEncrypted(participant, "patch", patch)));
     }
 
     async function publishPresence(presence) {
-      if (socketState.state !== "ready" || !currentGrantAllows("view.receive")) {
-        throw new Error("The interactive participant is not ready for presence.");
-      }
+      const ready = readyParticipants().filter((participant) => currentGrantAllows(participant, "view.receive"));
+      if (!ready.length) throw new Error("Interactive participants are not ready for presence.");
       if (presence.sessionId !== sessionId) throw new Error("The presence belongs to another session.");
-      return sendEncrypted("host-presence", Contract.encodeHostPresence(presence));
+      const encoded = Contract.encodeHostPresence(presence);
+      return Promise.all(ready.map((participant) => sendEncrypted(participant, "host-presence", encoded)));
     }
 
     async function sendChat(text) {
-      if (!currentGrantAllows("chat.send")) throw new Error("Chat is not granted.");
-      const chat = {
-        type: "shared-view-chat",
-        version: 1,
-        sessionId,
-        participantId: participant.participantId,
-        sequence: ++hostChatSequence,
-        sentAt: Date.now(),
-        sourceEpoch,
-        grantId: currentGrant.grantId,
-        sender: "host",
-        text: String(text || "").slice(0, 500)
-      };
-      await sendEncrypted("host-chat", chat);
-      socketState.emit({ type: "chat", chat, displayName: "You" });
-      return chat;
+      const recipients = readyParticipants().filter((participant) => currentGrantAllows(participant, "chat.send"));
+      if (!recipients.length) throw new Error("Chat is not granted.");
+      const chats = await Promise.all(recipients.map(async (participant) => {
+        const chat = {
+          type: "shared-view-chat",
+          version: 1,
+          sessionId,
+          participantId: participant.participantId,
+          sequence: ++participant.hostChatSequence,
+          sentAt: Date.now(),
+          sourceEpoch,
+          grantId: participant.currentGrant.grantId,
+          sender: "host",
+          text: String(text || "").slice(0, 500)
+        };
+        await sendEncrypted(participant, "host-chat", chat);
+        return chat;
+      }));
+      socketState.emit({ type: "chat", chat: chats[0], displayName: "You", recipients: chats.length });
+      return chats;
     }
 
-    async function removeGuest(reason = "host-removed") {
+    async function removeGuest(reason = "host-removed", participantId = activeParticipantId) {
+      const participant = participants.get(participantId) || readyParticipants().at(-1);
       if (!participant) return false;
-      clearTimeout(grantTimer);
+      clearTimeout(participant.grantTimer);
       sendRoomMessage("interactive-remove", {
         participantId: participant.participantId,
         reason: String(reason).slice(0, 80)
       });
-      currentGrant = null;
-      capabilities.clear();
-      capabilities.add("view.receive");
-      socketState.setState("removed", { reason });
-      socketState.emit({ type: "removed", reason, participantId: participant.participantId });
+      participants.delete(participant.participantId);
+      if (activeParticipantId === participant.participantId) activeParticipantId = readyParticipants().at(-1)?.participantId || null;
+      socketState.emit({ type: "removed", reason, participantId: participant.participantId, displayName: participant.displayName });
+      announceNextPending();
       return true;
     }
 
     function end(reason = "stopped") {
       if (socketState.state === "ended") return;
-      clearTimeout(grantTimer);
+      for (const participant of participants.values()) clearTimeout(participant.grantTimer);
       try { sendRoomMessage("room-end", { reason: String(reason).slice(0, 80) }); } catch (_error) {}
       socketState.setState("ended", { reason });
       socketState.close();

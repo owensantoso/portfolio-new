@@ -9,45 +9,41 @@
   <link rel="stylesheet" href="./assets/receiver.css">
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <p class="eyebrow">AMBIENT PLACE · END-TO-END ENCRYPTED</p>
-      <h1>Linked Shared View</h1>
-    </div>
-    <div class="topbar-actions">
-      <button id="debugButton" class="secondary-button" type="button" aria-expanded="false">Show data use</button>
-      <button id="stopButton" type="button" disabled>Leave view</button>
-    </div>
-  </header>
-
   <main>
-    <section class="state-card" aria-live="polite">
-      <span id="stateDot" class="state-dot"></span>
-      <div>
-        <strong id="stateLabel">Opening invitation</strong>
-        <p id="sourceLabel">The fragment key stays in this browser and is never sent to the relay.</p>
+    <section class="viewer-shell" aria-label="Inert linked webpage representation">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">↗</div>
+        <h2>Waiting for the publisher</h2>
+        <p>Nothing is visible until the publisher explicitly shares a tab.</p>
       </div>
-    </section>
+      <div id="viewportFrame" class="viewport-frame" hidden>
+        <div id="viewportCanvas" class="viewport-canvas">
+          <div id="viewportSurface" class="viewport-surface"></div>
+          <div id="remoteCursor" class="remote-cursor" hidden aria-hidden="true"></div>
+        </div>
+      </div>
+      <div class="viewer-gate">
+        <section id="joinPanel" class="interaction-card gate-card" hidden>
+          <div>
+            <strong>Ask to join</strong>
+            <p>The host must approve you before any page state is sent.</p>
+          </div>
+          <label for="displayName">Name shown to the host</label>
+          <div class="interaction-row">
+            <input id="displayName" type="text" maxlength="40" value="Guest" autocomplete="off">
+            <button id="joinButton" type="button">Request access</button>
+          </div>
+        </section>
 
-    <section id="joinPanel" class="interaction-card" hidden>
-      <div>
-        <strong>Ask to join</strong>
-        <p>The host must approve you before any page state is sent.</p>
+        <section id="pairingPanel" class="interaction-card pairing-card gate-card" hidden>
+          <div>
+            <strong>Compare this pairing code with the host</strong>
+            <p>Confirm only if all three groups match exactly.</p>
+          </div>
+          <output id="pairingCode" class="pairing-code">—</output>
+          <button id="confirmPairingButton" type="button">Codes match</button>
+        </section>
       </div>
-      <label for="displayName">Name shown to the host</label>
-      <div class="interaction-row">
-        <input id="displayName" type="text" maxlength="40" value="Guest" autocomplete="off">
-        <button id="joinButton" type="button">Request access</button>
-      </div>
-    </section>
-
-    <section id="pairingPanel" class="interaction-card pairing-card" hidden>
-      <div>
-        <strong>Compare this pairing code with the host</strong>
-        <p>Confirm only if all three groups match exactly.</p>
-      </div>
-      <output id="pairingCode" class="pairing-code">—</output>
-      <button id="confirmPairingButton" type="button">Codes match</button>
     </section>
 
     <section id="modePanel" class="interaction-card mode-card" hidden>
@@ -61,17 +57,11 @@
       </div>
     </section>
 
-    <section class="viewer-shell" aria-label="Inert linked webpage representation">
-      <div id="emptyState" class="empty-state">
-        <div class="empty-icon">↗</div>
-        <h2>Waiting for the publisher</h2>
-        <p>Nothing is visible until the publisher explicitly shares a tab.</p>
-      </div>
-      <div id="viewportFrame" class="viewport-frame" hidden>
-        <div id="viewportCanvas" class="viewport-canvas">
-          <div id="viewportSurface" class="viewport-surface"></div>
-          <div id="remoteCursor" class="remote-cursor" hidden aria-hidden="true"></div>
-        </div>
+    <section class="state-card" aria-live="polite">
+      <span id="stateDot" class="state-dot"></span>
+      <div>
+        <strong id="stateLabel">Opening invitation</strong>
+        <p id="sourceLabel">The fragment key stays in this browser and is never sent to the relay.</p>
       </div>
     </section>
 
@@ -89,6 +79,17 @@
       <p>UTF-8 WebSocket messages; excludes WebSocket framing, TCP, TLS, and other network overhead.</p>
     </section>
   </main>
+
+  <footer class="topbar">
+    <div>
+      <p class="eyebrow">AMBIENT PLACE · END-TO-END ENCRYPTED</p>
+      <h1>Linked Shared View</h1>
+    </div>
+    <div class="topbar-actions">
+      <button id="debugButton" class="secondary-button" type="button" aria-expanded="false">Show data use</button>
+      <button id="stopButton" type="button" disabled>Leave view</button>
+    </div>
+  </footer>
 
   <aside id="chatLayer" class="chat-layer" hidden aria-label="Ephemeral Shared View chat">
     <div id="chatBubbles" class="chat-bubbles" aria-live="polite"></div>
