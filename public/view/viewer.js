@@ -21,6 +21,8 @@ const chatLauncher = document.querySelector("#chatLauncher");
 const chatComposer = document.querySelector("#chatComposer");
 const chatInput = document.querySelector("#chatInput");
 const viewerShell = document.querySelector(".viewer-shell");
+const viewerStage = document.querySelector("#viewerStage");
+const projectionLabel = document.querySelector("#projectionLabel");
 const stateLabel = document.querySelector("#stateLabel");
 const sourceLabel = document.querySelector("#sourceLabel");
 const diagState = document.querySelector("#diagState");
@@ -94,9 +96,6 @@ function appendChat(chat, displayName) {
   }, 6_000);
 }
 
-let chatKeyboardBaseline = null;
-let chatKeyboardWasVisible = false;
-
 function fitViewerAroundKeyboard() {
   const visualViewport = window.visualViewport;
   const keyboardVisible = Boolean(
@@ -107,19 +106,39 @@ function fitViewerAroundKeyboard() {
   );
   if (!keyboardVisible) {
     delete renderer.viewportFrame.dataset.fitHeight;
-    viewerShell.dataset.keyboardFit = "false";
+    viewerStage.dataset.keyboardFit = "false";
     renderer.updateScale();
     return;
   }
   const shellRect = viewerShell.getBoundingClientRect();
   const shellStyle = getComputedStyle(viewerShell);
-  const verticalPadding = parseFloat(shellStyle.paddingTop) + parseFloat(shellStyle.paddingBottom);
+  const verticalPadding = parseFloat(shellStyle.paddingTop) + parseFloat(shellStyle.paddingBottom)
+    + parseFloat(shellStyle.borderTopWidth) + parseFloat(shellStyle.borderBottomWidth);
+  const fixedPhoneChrome = viewerShell.querySelector(".projection-chrome")?.offsetHeight || 0;
+  const homeIndicator = viewerShell.querySelector(".phone-home-indicator");
+  const fixedPhoneFooter = homeIndicator && getComputedStyle(homeIndicator).display !== "none"
+    ? homeIndicator.offsetHeight + 12
+    : 0;
+  const chatAllowance = chatLauncher.offsetHeight + (chatComposer.hidden ? 0 : chatComposer.offsetHeight + 6) + 8;
   const shellTopInsideVisibleArea = Math.max(0, shellRect.top - visualViewport.offsetTop);
-  const availableHeight = Math.max(120, visualViewport.height - shellTopInsideVisibleArea - verticalPadding - 12);
+  const availableHeight = Math.max(
+    120,
+    visualViewport.height - shellTopInsideVisibleArea - verticalPadding - fixedPhoneChrome - fixedPhoneFooter - chatAllowance - 10
+  );
   renderer.viewportFrame.dataset.animateFit = "true";
   renderer.viewportFrame.dataset.fitHeight = String(Math.floor(availableHeight));
-  viewerShell.dataset.keyboardFit = "true";
+  viewerStage.dataset.keyboardFit = "true";
   renderer.updateScale();
+}
+
+function isPhoneLikeViewport(metrics) {
+  return Boolean(metrics && metrics.height > metrics.width * 1.25 && metrics.width <= 600);
+}
+
+function updateProjectionPresentation() {
+  const phoneLike = isPhoneLikeViewport(renderer.getViewportMetrics());
+  viewerStage.dataset.device = phoneLike ? "phone" : "screen";
+  projectionLabel.textContent = phoneLike ? "Live phone view" : "Live shared view";
 }
 
 function setChatComposerOpen(open) {
@@ -128,12 +147,8 @@ function setChatComposerOpen(open) {
   chatLauncher.setAttribute("aria-expanded", String(open));
   chatLauncher.setAttribute("aria-label", open ? "Close chat" : "Open chat");
   if (open) {
-    chatKeyboardBaseline = window.visualViewport?.height || window.innerHeight;
-    chatKeyboardWasVisible = false;
     chatInput.focus();
   } else {
-    chatKeyboardBaseline = null;
-    chatKeyboardWasVisible = false;
     chatInput.blur();
   }
   fitViewerAroundKeyboard();
@@ -246,6 +261,7 @@ function handleInteractiveEvent(event) {
   }
   if (event.type === "snapshot") {
     renderer.renderSnapshot(event.snapshot, { updatesPerSecond: updateRate() });
+    updateProjectionPresentation();
     clampLocalViewport();
     if (exploreEnabled) renderLocalPresence();
     return;
@@ -343,6 +359,7 @@ async function startLegacy() {
       try {
         const snapshot = await Session.decryptSnapshot({ envelope: message.envelope, roomId: invitation.roomId, key: invitation.key });
         renderer.renderSnapshot(snapshot, { payloadBytes: payloadSize(message.envelope), updatesPerSecond: updateRate() });
+        updateProjectionPresentation();
       } catch (_error) {
         renderer.showEnded("This frame failed authenticated decryption or validation.");
         socket.close();
@@ -471,11 +488,6 @@ renderer.viewportFrame.addEventListener("pointerleave", () => {
 chatLauncher.addEventListener("click", () => {
   setChatComposerOpen(chatComposer.hidden);
 });
-chatComposer.addEventListener("focusout", () => {
-  setTimeout(() => {
-    if (!chatComposer.contains(document.activeElement)) setChatComposerOpen(false);
-  }, 0);
-});
 chatComposer.addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = chatInput.value.trim();
@@ -510,12 +522,6 @@ window.addEventListener("resize", () => {
 });
 window.visualViewport?.addEventListener("resize", () => {
   fitViewerAroundKeyboard();
-  if (chatComposer.hidden || !chatKeyboardBaseline) return;
-  if (window.visualViewport.height < chatKeyboardBaseline - 60) {
-    chatKeyboardWasVisible = true;
-  } else if (chatKeyboardWasVisible) {
-    setChatComposerOpen(false);
-  }
 });
 window.visualViewport?.addEventListener("scroll", fitViewerAroundKeyboard);
 

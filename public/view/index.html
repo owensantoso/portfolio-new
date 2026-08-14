@@ -10,7 +10,12 @@
 </head>
 <body>
   <main>
+    <div id="viewerStage" class="viewer-stage" data-device="screen">
     <section class="viewer-shell" aria-label="Inert linked webpage representation">
+      <div class="projection-chrome" aria-label="Live, view-only shared screen">
+        <span><i aria-hidden="true"></i><strong id="projectionLabel">Live shared view</strong></span>
+        <small>View only</small>
+      </div>
       <div id="emptyState" class="empty-state">
         <div class="empty-icon">↗</div>
         <h2>Waiting for the publisher</h2>
@@ -45,6 +50,9 @@
         </section>
       </div>
 
+      <div class="phone-home-indicator" aria-hidden="true"></div>
+    </section>
+
       <aside id="chatLayer" class="chat-layer" hidden aria-label="Ephemeral Shared View chat">
         <div id="chatBubbles" class="chat-bubbles" aria-live="polite"></div>
         <button id="chatLauncher" class="chat-launcher" type="button" aria-expanded="false" aria-label="Open chat"></button>
@@ -56,7 +64,7 @@
           </div>
         </form>
       </aside>
-    </section>
+    </div>
 
     <section id="modePanel" class="interaction-card mode-card" hidden>
       <div>
