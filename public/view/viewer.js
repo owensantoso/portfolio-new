@@ -340,6 +340,7 @@ function handleInteractiveEvent(event) {
   }
   if (event.type === "status" && ["disconnected", "ended"].includes(event.state)) {
     clearInterval(countdownTimer);
+    grantCountdown.textContent = "Ended";
     setChatComposerOpen(false);
     chatLayer.dataset.disconnected = "true";
     chatLauncher.disabled = true;
@@ -399,6 +400,8 @@ function handleInteractiveEvent(event) {
     return;
   }
   if (event.type === "host-paused") {
+    clearInterval(countdownTimer);
+    grantCountdown.textContent = "Reconnecting…";
     setChatComposerOpen(false);
     chatLayer.dataset.disconnected = "paused";
     chatLauncher.disabled = true;
@@ -408,6 +411,9 @@ function handleInteractiveEvent(event) {
     return;
   }
   if (event.type === "host-resumed") {
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(updateCountdown, 1000);
+    updateCountdown();
     delete chatLayer.dataset.disconnected;
     chatLauncher.disabled = !interactiveCapabilities.has("chat.send");
     stateDot.className = "state-dot";
@@ -417,6 +423,7 @@ function handleInteractiveEvent(event) {
   }
   if (event.type === "removed") {
     clearInterval(countdownTimer);
+    grantCountdown.textContent = "Ended";
     setChatEnabled(false);
     renderer.showEnded(`The host removed this guest (${event.reason || "removed"}).`);
     return;

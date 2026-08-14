@@ -260,7 +260,8 @@
     onEvent = () => {},
     grantLifetimeMs = 15 * 60 * 1000,
     reconnectDelayMs = 500,
-    maxReconnectDelayMs = 5000
+    maxReconnectDelayMs = 5000,
+    heartbeatIntervalMs = 5_000
   }) {
     if (typeof sessionId !== "string" || !sessionId || typeof sourceEpoch !== "string" || !sourceEpoch) {
       throw new Error("The interactive host session context is invalid.");
@@ -272,6 +273,7 @@
     const socketState = createInteractiveSocketState({ parsedRelayUrl, WebSocketImpl, onEvent });
     let connectPromise = null;
     let reconnectTimer = null;
+    let heartbeatTimer = null;
     let reconnectAttempt = 0;
     let hasRegisteredHost = false;
     let hasConnectedHost = false;
@@ -330,6 +332,24 @@
         }
         throw error;
       }
+    }
+
+    function stopHeartbeat() {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+
+    function startHeartbeat() {
+      stopHeartbeat();
+      const beat = () => {
+        try {
+          sendRoomMessage("interactive-heartbeat");
+        } catch (_error) {
+          // sendRoomMessage owns reconnect scheduling.
+        }
+      };
+      beat();
+      heartbeatTimer = setInterval(beat, Math.max(250, Number(heartbeatIntervalMs) || 5_000));
     }
 
     function reconcileRelayParticipants(message) {
@@ -557,6 +577,7 @@
         return;
       }
       if (message.type === "room-ended") {
+        stopHeartbeat();
         for (const participant of participants.values()) clearTimeout(participant.grantTimer);
         socketState.setState("ended", { reason: message.reason || "stopped" });
         socketState.close();
@@ -593,6 +614,7 @@
             resume
           });
           hasRegisteredHost = true;
+          startHeartbeat();
         });
         socket.addEventListener("message", (event) => {
           handleMessage(event, resolve, reject).catch((error) => {
@@ -603,6 +625,7 @@
         socket.addEventListener("error", () => reject(new Error("The interactive relay connection failed.")));
         socket.addEventListener("close", () => {
           if (socketState.socket !== socket) return;
+          stopHeartbeat();
           connectPromise = null;
           if (!["ended", "removed"].includes(socketState.state)) scheduleReconnect();
         });
@@ -766,6 +789,7 @@
       if (socketState.state === "ended") return;
       clearTimeout(reconnectTimer);
       reconnectTimer = null;
+      stopHeartbeat();
       for (const participant of participants.values()) clearTimeout(participant.grantTimer);
       try { sendRoomMessage("room-end", { reason: String(reason).slice(0, 80) }); } catch (_error) {}
       socketState.setState("ended", { reason });
