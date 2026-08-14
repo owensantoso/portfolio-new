@@ -41,6 +41,7 @@ let grantExpiry = 0;
 let countdownTimer = null;
 let hostDisplayName = "Owen";
 let chatOpenScrollPosition = null;
+const MAX_CHAT_HISTORY = 100;
 const legacyUsage = { sentBytes: 0, receivedBytes: 0, sentMessages: 0, receivedMessages: 0 };
 
 function encodedBytes(value) {
@@ -84,17 +85,30 @@ function setState(state, title, message) {
 
 function appendChat(chat, displayName) {
   const bubble = document.createElement("div");
-  bubble.className = `chat-bubble ${chat.sender === "guest" ? "guest" : "host"}`;
-  const author = document.createElement("strong");
-  author.textContent = displayName;
+  const messageSide = chat.sender === "guest" ? "local" : "remote";
+  bubble.className = `chat-bubble ${messageSide}`;
+  bubble.dataset.preview = "true";
   const message = document.createElement("span");
   message.textContent = chat.text;
-  bubble.append(author, message);
+  if (messageSide === "remote") {
+    const author = document.createElement("strong");
+    author.textContent = displayName;
+    bubble.append(author);
+  }
+  bubble.append(message);
   chatBubbles.appendChild(bubble);
-  while (chatBubbles.children.length > 2) chatBubbles.firstElementChild?.remove();
+  while (chatBubbles.children.length > MAX_CHAT_HISTORY) chatBubbles.firstElementChild?.remove();
+  chatBubbles.scrollTop = chatBubbles.scrollHeight;
   setTimeout(() => {
+    if (!chatComposer.hidden) {
+      bubble.dataset.preview = "false";
+      return;
+    }
     bubble.dataset.leaving = "true";
-    setTimeout(() => bubble.remove(), 180);
+    setTimeout(() => {
+      bubble.dataset.preview = "false";
+      delete bubble.dataset.leaving;
+    }, 180);
   }, 6_000);
 }
 
@@ -109,9 +123,12 @@ function fitViewerAroundKeyboard() {
   if (!keyboardVisible) {
     delete renderer.viewportFrame.dataset.fitHeight;
     viewerStage.dataset.keyboardFit = "false";
+    chatLayer.dataset.layout = "overlay";
     renderer.updateScale();
     return;
   }
+  viewerStage.dataset.keyboardFit = "true";
+  chatLayer.dataset.layout = "sidecar";
   const shellRect = viewerShell.getBoundingClientRect();
   const shellStyle = getComputedStyle(viewerShell);
   const verticalPadding = parseFloat(shellStyle.paddingTop) + parseFloat(shellStyle.paddingBottom)
@@ -128,7 +145,6 @@ function fitViewerAroundKeyboard() {
   );
   renderer.viewportFrame.dataset.animateFit = "true";
   renderer.viewportFrame.dataset.fitHeight = String(Math.floor(availableHeight));
-  viewerStage.dataset.keyboardFit = "true";
   renderer.updateScale();
 }
 
@@ -144,6 +160,12 @@ function updateProjectionPresentation() {
 
 function positionMobileChat() {
   if (window.innerWidth > 720 || chatComposer.hidden) return;
+  if (chatLayer.dataset.layout === "sidecar") {
+    chatLayer.style.removeProperty("--chat-visual-top");
+    chatLayer.style.removeProperty("--chat-visual-right");
+    chatLayer.style.removeProperty("--chat-visual-width");
+    return;
+  }
   const visualViewport = window.visualViewport;
   const visualTop = Math.max(8, (visualViewport?.offsetTop || 0) + 10);
   const visualRight = Math.max(
@@ -176,11 +198,13 @@ function setChatComposerOpen(open) {
   } else {
     chatInput.blur();
     chatOpenScrollPosition = null;
+    chatLayer.dataset.layout = "overlay";
     chatLayer.style.removeProperty("--chat-visual-top");
     chatLayer.style.removeProperty("--chat-visual-right");
     chatLayer.style.removeProperty("--chat-visual-width");
   }
   fitViewerAroundKeyboard();
+  positionMobileChat();
 }
 
 function setChatEnabled(enabled) {
@@ -531,7 +555,7 @@ chatComposer.addEventListener("submit", async (event) => {
   try { await interactiveGuest.sendChat(text); } catch (error) {
     setState("error", "Message was not sent", error.message || String(error));
   }
-  chatInput.focus();
+  chatInput.focus({ preventScroll: true });
 });
 
 debugButton.addEventListener("click", () => {
@@ -549,15 +573,16 @@ renderer.stopButton.addEventListener("click", () => {
 });
 window.addEventListener("resize", () => {
   fitViewerAroundKeyboard();
+  positionMobileChat();
   if (exploreEnabled) renderLocalPresence();
 });
 window.visualViewport?.addEventListener("resize", () => {
-  positionMobileChat();
   fitViewerAroundKeyboard();
+  positionMobileChat();
 });
 window.visualViewport?.addEventListener("scroll", () => {
-  positionMobileChat();
   fitViewerAroundKeyboard();
+  positionMobileChat();
 });
 
 const interactiveParameters = new URLSearchParams(location.hash.replace(/^#/u, ""));
