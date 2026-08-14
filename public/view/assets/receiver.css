@@ -61,7 +61,7 @@ main { width: min(1120px, calc(100% - 44px)); margin: 22px auto; }
   transition: width .26s cubic-bezier(.2,.8,.2,1), border-radius .26s ease;
 }
 .projection-chrome {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  display: flex; align-items: center; gap: 16px;
   min-height: 28px; padding: 0 4px 8px; color: rgba(255,255,255,.72);
   font: 720 10px/1.2 -apple-system, BlinkMacSystemFont, sans-serif;
   letter-spacing: .08em; text-transform: uppercase;
@@ -72,7 +72,6 @@ main { width: min(1120px, calc(100% - 44px)); margin: 22px auto; }
   box-shadow: 0 0 0 4px rgba(255,89,100,.14);
 }
 .projection-chrome strong { font: inherit; }
-.projection-chrome small { font: 650 9px/1.2 -apple-system, sans-serif; letter-spacing: .06em; opacity: .72; }
 .phone-home-indicator { display: none; }
 .viewer-stage[data-device="phone"] .viewer-shell {
   padding: 10px; border: 5px solid #0b0d12; border-radius: 34px;
@@ -162,16 +161,12 @@ main { width: min(1120px, calc(100% - 44px)); margin: 22px auto; }
 .chat-bubble strong { display: block; margin-bottom: 2px; font-size: 10px; opacity: .72; }
 .chat-launcher {
   position: relative; width: 36px; height: 36px; margin-left: 0; display: block; padding: 0;
-  border: 1px solid rgba(255,255,255,.5); background: rgba(247,247,249,.76); color: #242832;
+  border: 1px solid rgba(255,255,255,.34); background: rgba(31,35,44,.78); color: white;
   pointer-events: auto; box-shadow: 0 7px 22px rgba(0,0,0,.18); backdrop-filter: blur(18px) saturate(150%);
 }
-.chat-launcher::before {
-  content: ""; position: absolute; left: 9px; top: 8px; width: 17px; height: 14px;
-  border: 2px solid #242832; border-radius: 7px;
-}
-.chat-launcher::after {
-  content: ""; position: absolute; left: 12px; top: 21px; width: 6px; height: 6px;
-  border-left: 2px solid #242832; transform: skewY(-38deg);
+.chat-launcher-mark {
+  display: block; transform: translateY(-2px); color: white;
+  font: 800 16px/1 -apple-system, BlinkMacSystemFont, sans-serif; letter-spacing: 1px;
 }
 .chat-composer {
   display: grid; gap: 6px; margin-top: 6px; padding: 6px; border: 1px solid rgba(255,255,255,.48);
@@ -212,14 +207,22 @@ main { width: min(1120px, calc(100% - 44px)); margin: 22px auto; }
   .pairing-card { grid-template-columns: 1fr; }
   .interaction-row { grid-template-columns: 1fr; }
   .chat-layer {
-    position: relative; top: auto; right: auto; bottom: auto; left: auto;
+    position: absolute; top: 12px; right: 12px; bottom: auto; left: auto;
     display: flex; flex-direction: column; align-items: flex-end;
-    width: min(278px, 100%); margin: 8px 0 0 auto;
+    width: min(246px, calc(100vw - 24px)); margin: 0;
+  }
+  .chat-layer[data-open="true"] {
+    position: fixed; top: var(--chat-visual-top, 10px); right: var(--chat-visual-right, 10px);
+    z-index: 40; width: min(246px, calc(var(--chat-visual-width, 100vw) - 24px));
   }
   .chat-launcher { order: 1; margin-left: auto; }
-  .chat-composer { order: 2; width: 100%; }
+  .chat-layer[data-open="true"] .chat-launcher { display: none; }
+  .chat-composer { order: 1; width: 100%; margin-top: 0; }
   .chat-bubbles {
-    position: absolute; right: 0; bottom: calc(100% + 6px); order: 3;
+    position: absolute; top: calc(100% + 6px); right: 0; bottom: auto; order: 3;
     justify-items: end; width: 100%; margin: 0;
+  }
+  .chat-layer[data-open="true"] .chat-bubbles {
+    position: static; order: 2; margin-top: 6px;
   }
 }

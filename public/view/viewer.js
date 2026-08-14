@@ -39,6 +39,8 @@ let localCursor = { x: 0, y: 0, visible: false };
 let presenceTimer = null;
 let grantExpiry = 0;
 let countdownTimer = null;
+let hostDisplayName = "Owen";
+let chatOpenScrollPosition = null;
 const legacyUsage = { sentBytes: 0, receivedBytes: 0, sentMessages: 0, receivedMessages: 0 };
 
 function encodedBytes(value) {
@@ -119,11 +121,10 @@ function fitViewerAroundKeyboard() {
   const fixedPhoneFooter = homeIndicator && getComputedStyle(homeIndicator).display !== "none"
     ? homeIndicator.offsetHeight + 12
     : 0;
-  const chatAllowance = chatLauncher.offsetHeight + (chatComposer.hidden ? 0 : chatComposer.offsetHeight + 6) + 8;
   const shellTopInsideVisibleArea = Math.max(0, shellRect.top - visualViewport.offsetTop);
   const availableHeight = Math.max(
     120,
-    visualViewport.height - shellTopInsideVisibleArea - verticalPadding - fixedPhoneChrome - fixedPhoneFooter - chatAllowance - 10
+    visualViewport.height - shellTopInsideVisibleArea - verticalPadding - fixedPhoneChrome - fixedPhoneFooter - 10
   );
   renderer.viewportFrame.dataset.animateFit = "true";
   renderer.viewportFrame.dataset.fitHeight = String(Math.floor(availableHeight));
@@ -138,18 +139,46 @@ function isPhoneLikeViewport(metrics) {
 function updateProjectionPresentation() {
   const phoneLike = isPhoneLikeViewport(renderer.getViewportMetrics());
   viewerStage.dataset.device = phoneLike ? "phone" : "screen";
-  projectionLabel.textContent = phoneLike ? "Live phone view" : "Live shared view";
+  projectionLabel.textContent = hostDisplayName;
+}
+
+function positionMobileChat() {
+  if (window.innerWidth > 720 || chatComposer.hidden) return;
+  const visualViewport = window.visualViewport;
+  const visualTop = Math.max(8, (visualViewport?.offsetTop || 0) + 10);
+  const visualRight = Math.max(
+    10,
+    window.innerWidth - ((visualViewport?.offsetLeft || 0) + (visualViewport?.width || window.innerWidth)) + 10
+  );
+  const visualWidth = Math.max(220, visualViewport?.width || window.innerWidth);
+  chatLayer.style.setProperty("--chat-visual-top", `${visualTop}px`);
+  chatLayer.style.setProperty("--chat-visual-right", `${visualRight}px`);
+  chatLayer.style.setProperty("--chat-visual-width", `${visualWidth}px`);
 }
 
 function setChatComposerOpen(open) {
+  if (open && window.innerWidth <= 720) chatOpenScrollPosition = { x: window.scrollX, y: window.scrollY };
   chatComposer.hidden = !open;
   chatLayer.dataset.open = String(open);
   chatLauncher.setAttribute("aria-expanded", String(open));
   chatLauncher.setAttribute("aria-label", open ? "Close chat" : "Open chat");
   if (open) {
-    chatInput.focus();
+    positionMobileChat();
+    chatInput.focus({ preventScroll: true });
+    const restorePosition = chatOpenScrollPosition;
+    if (restorePosition) {
+      requestAnimationFrame(() => {
+        window.scrollTo(restorePosition.x, restorePosition.y);
+        positionMobileChat();
+        fitViewerAroundKeyboard();
+      });
+    }
   } else {
     chatInput.blur();
+    chatOpenScrollPosition = null;
+    chatLayer.style.removeProperty("--chat-visual-top");
+    chatLayer.style.removeProperty("--chat-visual-right");
+    chatLayer.style.removeProperty("--chat-visual-width");
   }
   fitViewerAroundKeyboard();
 }
@@ -190,6 +219,8 @@ function renderPresenceMode() {
 
 function applyGrant(event) {
   interactiveCapabilities = new Set(event.capabilities);
+  hostDisplayName = String(event.grant?.hostDisplayName || "Owen").trim().slice(0, 40) || "Owen";
+  updateProjectionPresentation();
   grantExpiry = event.grant.expiresAt;
   clearInterval(countdownTimer);
   countdownTimer = setInterval(updateCountdown, 1000);
@@ -281,7 +312,7 @@ function handleInteractiveEvent(event) {
     return;
   }
   if (event.type === "chat") {
-    appendChat(event.chat, event.chat.sender === "guest" ? "You" : "Host");
+    appendChat(event.chat, event.chat.sender === "guest" ? "You" : event.displayName || hostDisplayName);
     return;
   }
   if (event.type === "host-paused") {
@@ -492,7 +523,7 @@ chatComposer.addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = chatInput.value.trim();
   if (!text) {
-    if (window.innerWidth > 720) setChatComposerOpen(false);
+    setChatComposerOpen(false);
     return;
   }
   if (!interactiveGuest) return;
@@ -521,9 +552,13 @@ window.addEventListener("resize", () => {
   if (exploreEnabled) renderLocalPresence();
 });
 window.visualViewport?.addEventListener("resize", () => {
+  positionMobileChat();
   fitViewerAroundKeyboard();
 });
-window.visualViewport?.addEventListener("scroll", fitViewerAroundKeyboard);
+window.visualViewport?.addEventListener("scroll", () => {
+  positionMobileChat();
+  fitViewerAroundKeyboard();
+});
 
 const interactiveParameters = new URLSearchParams(location.hash.replace(/^#/u, ""));
 if (interactiveParameters.get("v") === "1") {

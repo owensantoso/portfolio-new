@@ -542,6 +542,10 @@
     if (!validateInteractiveIdentity(grant)) return false;
     if (!Number.isFinite(grant.issuedAt) || !Number.isFinite(grant.expiresAt)) return false;
     if (grant.expiresAt <= grant.issuedAt || grant.expiresAt - grant.issuedAt > 30 * 60 * 1000) return false;
+    if (
+      grant.hostDisplayName !== undefined &&
+      (typeof grant.hostDisplayName !== "string" || grant.hostDisplayName.trim().length < 1 || grant.hostDisplayName.length > 40)
+    ) return false;
     return validateCapabilities(grant.capabilities);
   }
 

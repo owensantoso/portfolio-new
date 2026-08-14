@@ -255,6 +255,7 @@
     sourceEpoch,
     verificationRequired = true,
     chatEnabledByDefault = false,
+    hostDisplayName = "Owen",
     WebSocketImpl = globalThis.WebSocket,
     onEvent = () => {},
     grantLifetimeMs = 15 * 60 * 1000,
@@ -265,6 +266,7 @@
       throw new Error("The interactive host session context is invalid.");
     }
     const parsedRelayUrl = validateInteractiveRelayUrl(relayUrl, WebSocketImpl);
+    const normalizedHostDisplayName = String(hostDisplayName || "").trim().slice(0, 40) || "Owen";
     const invitation = await Session.createInteractiveInvitation({ viewerBaseUrl, verificationRequired });
     const resumeToken = Session.randomParticipantId();
     const socketState = createInteractiveSocketState({ parsedRelayUrl, WebSocketImpl, onEvent });
@@ -444,6 +446,7 @@
         expiresAt: issuedAt + Math.min(30 * 60 * 1000, Math.max(1000, grantLifetimeMs)),
         sourceEpoch,
         grantId: Session.randomParticipantId(),
+        hostDisplayName: normalizedHostDisplayName,
         capabilities: Contract.INTERACTIVE_CAPABILITIES.filter((capability) => capabilities.has(capability))
       };
       await sendEncrypted(participant, "grant", grant);
@@ -919,7 +922,7 @@
       }
       if (kind === "host-chat") {
         if (!grantAllows("chat.send") || !payloadMatchesGrant(payload)) return;
-        socketState.emit({ type: "chat", chat: payload, displayName: "Host" });
+        socketState.emit({ type: "chat", chat: payload, displayName: currentGrant.hostDisplayName || "Owen" });
         return;
       }
       socketState.setState("removed", { reason: payload.reason || "host-removed" });
