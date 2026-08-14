@@ -86,15 +86,33 @@ function appendChat(chat, displayName) {
   message.textContent = chat.text;
   bubble.append(author, message);
   chatBubbles.appendChild(bubble);
-  while (chatBubbles.children.length > 4) chatBubbles.firstElementChild?.remove();
-  setTimeout(() => bubble.remove(), 12_000);
+  while (chatBubbles.children.length > 2) chatBubbles.firstElementChild?.remove();
+  setTimeout(() => {
+    bubble.dataset.leaving = "true";
+    setTimeout(() => bubble.remove(), 180);
+  }, 6_000);
+}
+
+let chatKeyboardBaseline = null;
+
+function setChatComposerOpen(open) {
+  chatComposer.hidden = !open;
+  chatLayer.dataset.open = String(open);
+  chatLauncher.setAttribute("aria-expanded", String(open));
+  chatLauncher.setAttribute("aria-label", open ? "Close chat" : "Open chat");
+  if (open) {
+    chatKeyboardBaseline = window.visualViewport?.height || window.innerHeight;
+    chatInput.focus();
+  } else {
+    chatKeyboardBaseline = null;
+    chatInput.blur();
+  }
 }
 
 function setChatEnabled(enabled) {
   chatLayer.hidden = !enabled;
   if (!enabled) {
-    chatComposer.hidden = true;
-    chatLauncher.setAttribute("aria-expanded", "false");
+    setChatComposerOpen(false);
     chatBubbles.replaceChildren();
   }
 }
@@ -413,16 +431,19 @@ renderer.viewportFrame.addEventListener("pointerleave", () => {
 });
 
 chatLauncher.addEventListener("click", () => {
-  const opening = chatComposer.hidden;
-  chatComposer.hidden = !opening;
-  chatLauncher.setAttribute("aria-expanded", String(opening));
-  if (opening) chatInput.focus();
+  setChatComposerOpen(chatComposer.hidden);
+});
+chatComposer.addEventListener("focusout", () => {
+  setTimeout(() => {
+    if (!chatComposer.contains(document.activeElement)) setChatComposerOpen(false);
+  }, 0);
 });
 chatComposer.addEventListener("submit", async (event) => {
   event.preventDefault();
   const text = chatInput.value.trim();
   if (!text || !interactiveGuest) return;
   chatInput.value = "";
+  setChatComposerOpen(false);
   try { await interactiveGuest.sendChat(text); } catch (error) {
     setState("error", "Message was not sent", error.message || String(error));
   }
@@ -444,6 +465,10 @@ renderer.stopButton.addEventListener("click", () => {
 window.addEventListener("resize", () => {
   renderer.updateScale();
   if (exploreEnabled) renderLocalPresence();
+});
+window.visualViewport?.addEventListener("resize", () => {
+  if (chatComposer.hidden || !chatKeyboardBaseline) return;
+  if (window.visualViewport.height >= chatKeyboardBaseline - 60) setChatComposerOpen(false);
 });
 
 const interactiveParameters = new URLSearchParams(location.hash.replace(/^#/u, ""));

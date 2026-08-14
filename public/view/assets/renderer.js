@@ -62,6 +62,7 @@
           applySafeStyles(image, node.styles);
           image.style.width = `${Math.max(1, Number(node.width) || asset?.width || 1)}px`;
           image.style.height = `${Math.max(1, Number(node.height) || asset?.height || 1)}px`;
+          image.style.objectFit = "contain";
           if (!asset) image.addEventListener("error", () => image.classList.add("shared-view-visual-asset-failed"), { once: true });
           return image;
         }
