@@ -94,6 +94,7 @@ function appendChat(chat, displayName) {
 }
 
 let chatKeyboardBaseline = null;
+let chatKeyboardWasVisible = false;
 
 function setChatComposerOpen(open) {
   chatComposer.hidden = !open;
@@ -102,9 +103,11 @@ function setChatComposerOpen(open) {
   chatLauncher.setAttribute("aria-label", open ? "Close chat" : "Open chat");
   if (open) {
     chatKeyboardBaseline = window.visualViewport?.height || window.innerHeight;
+    chatKeyboardWasVisible = false;
     chatInput.focus();
   } else {
     chatKeyboardBaseline = null;
+    chatKeyboardWasVisible = false;
     chatInput.blur();
   }
 }
@@ -468,7 +471,11 @@ window.addEventListener("resize", () => {
 });
 window.visualViewport?.addEventListener("resize", () => {
   if (chatComposer.hidden || !chatKeyboardBaseline) return;
-  if (window.visualViewport.height >= chatKeyboardBaseline - 60) setChatComposerOpen(false);
+  if (window.visualViewport.height < chatKeyboardBaseline - 60) {
+    chatKeyboardWasVisible = true;
+  } else if (chatKeyboardWasVisible) {
+    setChatComposerOpen(false);
+  }
 });
 
 const interactiveParameters = new URLSearchParams(location.hash.replace(/^#/u, ""));
