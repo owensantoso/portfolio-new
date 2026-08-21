@@ -2,6 +2,9 @@
 
 const Session = globalThis.AmbientSharedViewSession;
 const Transport = globalThis.AmbientSharedViewTransport;
+const Anchor = globalThis.AmbientSharedViewAnchor;
+const Ink = globalThis.AmbientSharedViewInk;
+const Avatar = globalThis.AmbientSharedViewAvatar;
 const renderer = globalThis.AmbientSharedViewRenderer.create(document);
 const updateTimes = [];
 const joinPanel = document.querySelector("#joinPanel");
@@ -15,6 +18,8 @@ const modeLabel = document.querySelector("#modeLabel");
 const modeDescription = document.querySelector("#modeDescription");
 const grantCountdown = document.querySelector("#grantCountdown");
 const presenceShareButton = document.querySelector("#presenceShareButton");
+const inkShareButton = document.querySelector("#inkShareButton");
+const avatarShareButton = document.querySelector("#avatarShareButton");
 const chatLayer = document.querySelector("#chatLayer");
 const chatBubbles = document.querySelector("#chatBubbles");
 const chatLauncher = document.querySelector("#chatLauncher");
@@ -24,12 +29,17 @@ const viewerShell = document.querySelector(".viewer-shell");
 const viewerStage = document.querySelector("#viewerStage");
 const projectionLabel = document.querySelector("#projectionLabel");
 const projectionChrome = document.querySelector(".projection-chrome");
+const mediaSurface = document.querySelector("#mediaSurface");
+const mediaVideo = document.querySelector("#mediaVideo");
+const mediaStatus = document.querySelector("#mediaStatus");
+const pipButton = document.querySelector("#pipButton");
 const stateDot = document.querySelector("#stateDot");
 const stateLabel = document.querySelector("#stateLabel");
 const sourceLabel = document.querySelector("#sourceLabel");
 const diagState = document.querySelector("#diagState");
 const diagnostics = document.querySelector("#diagnostics");
 const debugButton = document.querySelector("#debugButton");
+const viewportSurface = document.querySelector("#viewportSurface");
 
 let socket = null;
 let interactiveGuest = null;
@@ -39,15 +49,160 @@ let presenceCapabilityAvailable = false;
 let localViewport = { scrollX: 0, scrollY: 0 };
 let localCursor = { x: 0, y: 0, visible: false };
 let presenceTimer = null;
+let inkSurface = null;
+let guestInkEnabled = false;
+let guestInkPointerId = null;
+let avatarSurface = null;
+let guestAvatarEnabled = false;
 let grantExpiry = 0;
 let countdownTimer = null;
 let hostDisplayName = "Owen";
+let guestDisplayName = "Guest";
 let chatOpenScrollPosition = null;
 let mobileKeyboardWasVisible = false;
 let keyboardFitRecoveryTimer = null;
 let keyboardFitRecoveryVersion = 0;
+let mediaRoom = null;
+let mediaTrack = null;
 const MAX_CHAT_HISTORY = 100;
 const legacyUsage = { sentBytes: 0, receivedBytes: 0, sentMessages: 0, receivedMessages: 0 };
+
+function isPageTextEntry(target) {
+  return Boolean(target && (
+    target.isContentEditable ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)
+  ));
+}
+
+function openAvatarChatOnEnter(event) {
+  if (
+    !guestAvatarEnabled || event.key !== "Enter" || event.repeat || event.isComposing ||
+    event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || event.defaultPrevented ||
+    chatLayer.hidden || chatLauncher.disabled || !chatComposer.hidden ||
+    isPageTextEntry(event.target)
+  ) return;
+  event.preventDefault();
+  event.stopPropagation();
+  setChatComposerOpen(true);
+}
+
+window.addEventListener("keydown", openAvatarChatOnEnter, true);
+
+const liveMirrorIndex = Object.freeze({
+  elementForId: (id) => renderer.nodeById.get(id) || null,
+  elementForPath: (path) => Anchor.createDomMirrorIndex(viewportSurface.firstChild, renderer.nodeById).elementForPath(path),
+  pathForElement: (element) => Anchor.createDomMirrorIndex(viewportSurface.firstChild, renderer.nodeById).pathForElement(element),
+  idForElement: (element) => {
+    for (const [id, candidate] of renderer.nodeById) if (candidate === element) return id;
+    return null;
+  }
+});
+
+function ensureAvatarSurface() {
+  if (avatarSurface || !Avatar) return avatarSurface;
+  avatarSurface = Avatar.create({
+    hostDocument: document,
+    index: liveMirrorIndex,
+    role: "guest",
+    viewport: () => {
+      const rect = renderer.viewportFrame.getBoundingClientRect();
+      return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+    }
+  });
+  avatarSurface?.setNames({ local: guestDisplayName, remote: hostDisplayName });
+  avatarSurface?.onEmit((frame) => {
+    interactiveGuest?.publishAvatar(frame).catch((error) => {
+      setState("error", "Avatar position was not sent", error.message || String(error));
+    });
+  });
+  return avatarSurface;
+}
+
+function setGuestAvatarEnabled(enabled) {
+  guestAvatarEnabled = Boolean(enabled && interactiveCapabilities.has("avatar.publish"));
+  if (guestAvatarEnabled) ensureAvatarSurface()?.start();
+  else {
+    avatarSurface?.destroy();
+    avatarSurface = null;
+  }
+  avatarShareButton.textContent = guestAvatarEnabled ? "Stop avatar" : "Play as avatar";
+  avatarShareButton.setAttribute("aria-pressed", String(guestAvatarEnabled));
+}
+
+function ensureInkSurface() {
+  if (inkSurface || !Ink) return inkSurface;
+  inkSurface = Ink.create({
+    hostDocument: document,
+    index: liveMirrorIndex,
+    viewport: () => {
+      const rect = renderer.viewportFrame.getBoundingClientRect();
+      return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+    }
+  });
+  inkSurface?.onEmit((frame) => {
+    interactiveGuest?.publishInk(frame).catch((error) => {
+      setState("error", "Ink was not sent", error.message || String(error));
+    });
+  });
+  return inkSurface;
+}
+
+function setGuestInkEnabled(enabled) {
+  guestInkEnabled = Boolean(enabled && interactiveCapabilities.has("ink.publish"));
+  if (!guestInkEnabled) guestInkPointerId = null;
+  if (!guestInkEnabled) inkSurface?.clearOwn("guest");
+  inkShareButton.textContent = guestInkEnabled ? "Stop drawing" : "Draw laser";
+  inkShareButton.setAttribute("aria-pressed", String(guestInkEnabled));
+}
+
+function guestInkPoint(event) {
+  const element = document.elementFromPoint(event.clientX, event.clientY);
+  if (viewportSurface.contains(element)) {
+    return Anchor.fromPointer(liveMirrorIndex, element, event.clientX, event.clientY, {
+      width: window.innerWidth,
+      height: window.innerHeight,
+      scrollY: localViewport.scrollY
+    });
+  }
+  const rect = renderer.viewportFrame.getBoundingClientRect();
+  return Anchor.freePoint(
+    (event.clientX - rect.left) / Math.max(1, rect.width),
+    (event.clientY - rect.top) / Math.max(1, rect.height),
+    localViewport.scrollY
+  );
+}
+
+function handleGuestInkPointerDown(event) {
+  if (!guestInkEnabled || event.button !== 0) return;
+  const point = guestInkPoint(event);
+  const surface = ensureInkSurface();
+  if (!point || !surface) return;
+  guestInkPointerId = event.pointerId;
+  surface.beginLocal({ mode: "laser", color: 0, width: 3, sender: "guest" });
+  surface.extendLocal(point);
+  try { renderer.viewportFrame.setPointerCapture(event.pointerId); } catch (_error) {}
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function handleGuestInkPointerMove(event) {
+  if (!guestInkEnabled || event.pointerId !== guestInkPointerId) return;
+  const samples = typeof event.getCoalescedEvents === "function" ? event.getCoalescedEvents() : [];
+  for (const sample of samples.length ? samples : [event]) {
+    const point = guestInkPoint(sample);
+    if (point) inkSurface?.extendLocal(point);
+  }
+  event.preventDefault();
+  event.stopPropagation();
+}
+
+function handleGuestInkPointerEnd(event) {
+  if (event.pointerId !== guestInkPointerId) return;
+  guestInkPointerId = null;
+  inkSurface?.endLocal();
+  event.preventDefault();
+  event.stopPropagation();
+}
 
 function encodedBytes(value) {
   return new TextEncoder().encode(String(value)).byteLength;
@@ -97,6 +252,86 @@ function setProjectionConnectionState(state) {
     ended: `Ended shared view from ${hostDisplayName}`
   };
   projectionChrome.setAttribute("aria-label", labels[state] || labels.waiting);
+}
+
+function setMediaState(state, label) {
+  mediaSurface.dataset.state = state;
+  viewerStage.dataset.mediaState = state;
+  mediaStatus.lastChild.textContent = ` ${label}`;
+  pipButton.disabled = state !== "live";
+}
+
+function isScreenShareTrack(track, publication) {
+  if (String(track?.kind || "").toLowerCase() !== "video") return false;
+  return String(publication?.source || track?.source || "").toLowerCase().includes("screen");
+}
+
+function attachMediaTrack(track, publication) {
+  if (!isScreenShareTrack(track, publication)) return;
+  if (mediaTrack && mediaTrack !== track) mediaTrack.detach(mediaVideo);
+  mediaTrack = track;
+  track.attach(mediaVideo);
+  mediaSurface.hidden = false;
+  setMediaState("live", "Full Pixels live");
+  mediaVideo.play().catch(() => {});
+}
+
+function detachMediaTrack(track = mediaTrack, ended = false) {
+  if (track) track.detach(mediaVideo);
+  if (track === mediaTrack) mediaTrack = null;
+  if (!mediaSurface.hidden) setMediaState(ended ? "ended" : "paused", ended ? "Full Pixels ended" : "Full Pixels paused");
+}
+
+async function startMediaLane() {
+  if (mediaRoom || !interactiveGuest?.status().mediaAvailable) return;
+  const LiveKit = globalThis.LivekitClient;
+  if (!LiveKit?.Room || !LiveKit?.RoomEvent) return;
+  const access = await interactiveGuest.requestMediaAccess();
+  const room = new LiveKit.Room({ adaptiveStream: true, dynacast: true });
+  mediaRoom = room;
+  room.on(LiveKit.RoomEvent.TrackSubscribed, attachMediaTrack);
+  room.on(LiveKit.RoomEvent.TrackUnsubscribed, (track) => {
+    if (track === mediaTrack) detachMediaTrack(track);
+  });
+  room.on(LiveKit.RoomEvent.TrackMuted, (publication) => {
+    if (publication?.track === mediaTrack) setMediaState("paused", "Full Pixels paused");
+  });
+  room.on(LiveKit.RoomEvent.TrackUnmuted, (publication) => {
+    if (publication?.track === mediaTrack) setMediaState("live", "Full Pixels live");
+  });
+  room.on(LiveKit.RoomEvent.Disconnected, () => {
+    detachMediaTrack(mediaTrack, true);
+    mediaRoom = null;
+  });
+  try {
+    await room.connect(access.url, access.token, { autoSubscribe: true });
+  } catch (error) {
+    mediaRoom = null;
+    room.disconnect();
+    throw error;
+  }
+}
+
+function endMediaLane() {
+  detachMediaTrack(mediaTrack, true);
+  mediaRoom?.disconnect();
+  mediaRoom = null;
+}
+
+async function togglePictureInPicture() {
+  if (document.pictureInPictureElement === mediaVideo) {
+    await document.exitPictureInPicture();
+    return;
+  }
+  if (typeof mediaVideo.requestPictureInPicture === "function") {
+    await mediaVideo.requestPictureInPicture();
+    return;
+  }
+  if (typeof mediaVideo.webkitSetPresentationMode === "function") {
+    mediaVideo.webkitSetPresentationMode("picture-in-picture");
+    return;
+  }
+  throw new Error("Picture in Picture is unavailable in this browser.");
 }
 
 function appendChat(chat, displayName) {
@@ -277,6 +512,12 @@ function renderPresenceMode() {
   presenceShareButton.hidden = !presenceCapabilityAvailable;
   presenceShareButton.disabled = false;
   presenceShareButton.textContent = exploreEnabled ? "Stop sharing pointer" : "Share pointer & viewport";
+  inkShareButton.hidden = !interactiveCapabilities.has("ink.publish");
+  inkShareButton.disabled = false;
+  inkShareButton.textContent = guestInkEnabled ? "Stop drawing" : "Draw laser";
+  avatarShareButton.hidden = !interactiveCapabilities.has("avatar.publish");
+  avatarShareButton.disabled = false;
+  avatarShareButton.textContent = guestAvatarEnabled ? "Stop avatar" : "Play as avatar";
   modeLabel.textContent = exploreEnabled
     ? "Explore + Point"
     : (presenceCapabilityAvailable ? "Pointing available" : "Presenter-follow");
@@ -288,8 +529,11 @@ function renderPresenceMode() {
 }
 
 function applyGrant(event) {
+  const inkWasAvailable = interactiveCapabilities.has("ink.publish");
+  const avatarWasAvailable = interactiveCapabilities.has("avatar.publish");
   interactiveCapabilities = new Set(event.capabilities);
   hostDisplayName = String(event.grant?.hostDisplayName || "Owen").trim().slice(0, 40) || "Owen";
+  avatarSurface?.setNames({ local: guestDisplayName, remote: hostDisplayName });
   updateProjectionPresentation();
   grantExpiry = event.grant.expiresAt;
   clearInterval(countdownTimer);
@@ -297,6 +541,12 @@ function applyGrant(event) {
   updateCountdown();
   presenceCapabilityAvailable = interactiveCapabilities.has("presence.publish");
   if (!presenceCapabilityAvailable) exploreEnabled = false;
+  if (!interactiveCapabilities.has("ink.publish")) {
+    setGuestInkEnabled(false);
+    if (inkWasAvailable) inkSurface?.clearAll();
+  }
+  if (!interactiveCapabilities.has("avatar.publish")) setGuestAvatarEnabled(false);
+  else if (!avatarWasAvailable) setGuestAvatarEnabled(true);
   modePanel.hidden = false;
   renderPresenceMode();
   setChatEnabled(interactiveCapabilities.has("chat.send"));
@@ -304,6 +554,9 @@ function applyGrant(event) {
   setState("ready", "Paired with the host", presenceCapabilityAvailable
     ? "The host offered pointing; choose whether to share."
     : "Waiting for the host's live view.");
+  startMediaLane().catch(() => {
+    if (!mediaSurface.hidden) setMediaState("ended", "Full Pixels unavailable");
+  });
 }
 
 function clampLocalViewport() {
@@ -345,6 +598,10 @@ function handleInteractiveEvent(event) {
     chatLayer.dataset.disconnected = "true";
     chatLauncher.disabled = true;
     setProjectionConnectionState("ended");
+    endMediaLane();
+    setGuestInkEnabled(false);
+    inkSurface?.clearAll();
+    setGuestAvatarEnabled(false);
     renderer.showEnded(event.state === "disconnected"
       ? "Connection lost. This is the last received frame and it is no longer live."
       : "The host ended this Shared View. The last inert frame remains visible.");
@@ -395,8 +652,19 @@ function handleInteractiveEvent(event) {
     renderer.renderPresence(event.presence);
     return;
   }
+  if (event.type === "ink") {
+    ensureInkSurface()?.applyFrame(event.frame);
+    return;
+  }
+  if (event.type === "avatar") {
+    const surface = ensureAvatarSurface();
+    surface?.setNames({ local: guestDisplayName, remote: event.displayName || hostDisplayName });
+    surface?.applyFrame(event.frame);
+    return;
+  }
   if (event.type === "chat") {
     appendChat(event.chat, event.chat.sender === "guest" ? "You" : event.displayName || hostDisplayName);
+    avatarSurface?.showChat(event.chat.sender, event.chat.text);
     return;
   }
   if (event.type === "host-paused") {
@@ -405,6 +673,10 @@ function handleInteractiveEvent(event) {
     setChatComposerOpen(false);
     chatLayer.dataset.disconnected = "paused";
     chatLauncher.disabled = true;
+    setGuestInkEnabled(false);
+    inkShareButton.disabled = true;
+    setGuestAvatarEnabled(false);
+    avatarShareButton.disabled = true;
     stateDot.className = "state-dot paused";
     setProjectionConnectionState("paused");
     setState("paused", "Host temporarily paused", "Safari interrupted the host connection. The last frame remains visible while it reconnects.");
@@ -416,6 +688,7 @@ function handleInteractiveEvent(event) {
     updateCountdown();
     delete chatLayer.dataset.disconnected;
     chatLauncher.disabled = !interactiveCapabilities.has("chat.send");
+    renderPresenceMode();
     stateDot.className = "state-dot";
     setProjectionConnectionState("waiting");
     setState("ready", "Host reconnected", "Waiting for the host's refreshed view.");
@@ -425,6 +698,9 @@ function handleInteractiveEvent(event) {
     clearInterval(countdownTimer);
     grantCountdown.textContent = "Ended";
     setChatEnabled(false);
+    setGuestInkEnabled(false);
+    inkSurface?.clearAll();
+    endMediaLane();
     renderer.showEnded(`The host removed this guest (${event.reason || "removed"}).`);
     return;
   }
@@ -434,6 +710,7 @@ function handleInteractiveEvent(event) {
 }
 
 async function startInteractiveJoin() {
+  guestDisplayName = String(displayNameInput.value || "Guest").trim().slice(0, 40) || "Guest";
   joinButton.disabled = true;
   displayNameInput.disabled = true;
   setState("requesting", "Requesting access", "No page state is available until the host approves.");
@@ -587,6 +864,25 @@ presenceShareButton.addEventListener("click", async () => {
   }
 });
 
+inkShareButton.addEventListener("click", () => {
+  setGuestInkEnabled(!guestInkEnabled);
+  setState("ready", guestInkEnabled ? "Drawing laser ink" : "Paired with the host", guestInkEnabled
+    ? "Drag over the inert page to point with a short-lived anchored trail."
+    : "Laser drawing is off.");
+});
+
+avatarShareButton.addEventListener("click", () => {
+  setGuestAvatarEnabled(!guestAvatarEnabled);
+  setState("ready", guestAvatarEnabled ? "Playing as your avatar" : "Paired with the host", guestAvatarEnabled
+    ? "Use A/D or the arrow keys to move; W, Up, or Space jumps."
+    : "Avatar movement is off.");
+});
+
+renderer.viewportFrame.addEventListener("pointerdown", handleGuestInkPointerDown);
+renderer.viewportFrame.addEventListener("pointermove", handleGuestInkPointerMove);
+renderer.viewportFrame.addEventListener("pointerup", handleGuestInkPointerEnd);
+renderer.viewportFrame.addEventListener("pointercancel", handleGuestInkPointerEnd);
+
 renderer.viewportFrame.addEventListener("wheel", (event) => {
   if (!exploreEnabled) return;
   event.preventDefault();
@@ -633,6 +929,17 @@ chatComposer.addEventListener("submit", async (event) => {
   chatInput.focus({ preventScroll: true });
 });
 
+mediaVideo.addEventListener("loadedmetadata", () => {
+  if (mediaVideo.videoWidth > 0 && mediaVideo.videoHeight > 0) {
+    mediaSurface.style.setProperty("--media-aspect", `${mediaVideo.videoWidth} / ${mediaVideo.videoHeight}`);
+  }
+});
+mediaVideo.addEventListener("enterpictureinpicture", () => { pipButton.textContent = "Return to page"; });
+mediaVideo.addEventListener("leavepictureinpicture", () => { pipButton.textContent = "Picture in Picture"; });
+pipButton.addEventListener("click", () => {
+  togglePictureInPicture().catch((error) => setState("error", "Picture in Picture did not start", error.message || String(error)));
+});
+
 debugButton.addEventListener("click", () => {
   diagnostics.hidden = !diagnostics.hidden;
   debugButton.textContent = diagnostics.hidden ? "Show data use" : "Hide data use";
@@ -640,6 +947,11 @@ debugButton.addEventListener("click", () => {
 });
 
 renderer.stopButton.addEventListener("click", () => {
+  endMediaLane();
+  setGuestInkEnabled(false);
+  inkSurface?.destroy();
+  inkSurface = null;
+  setGuestAvatarEnabled(false);
   if (interactiveGuest) interactiveGuest.leave();
   else socket?.close();
   renderer.showEnded(interactiveGuest
@@ -656,9 +968,15 @@ window.visualViewport?.addEventListener("resize", () => {
 window.visualViewport?.addEventListener("scroll", () => {
   fitViewerAroundKeyboard();
 });
+window.addEventListener("pagehide", () => {
+  inkSurface?.destroy();
+  inkSurface = null;
+  avatarSurface?.destroy();
+  avatarSurface = null;
+}, { once: true });
 
 const interactiveParameters = new URLSearchParams(location.hash.replace(/^#/u, ""));
-if (interactiveParameters.get("v") === "1") {
+if (interactiveParameters.get("v") === String(Session.INTERACTIVE_VERSION)) {
   joinPanel.hidden = false;
   setState("invited", "Interactive invitation", "Ask to join; the host must approve you before any page state is sent.");
 } else {

@@ -34,7 +34,8 @@
     "right", "text-align", "text-decoration-color", "text-decoration-line",
     "text-decoration-style", "text-indent", "text-transform", "text-wrap", "top", "transform",
     "transform-origin", "vertical-align", "white-space", "width",
-    "word-break", "z-index"
+    "word-break", "overflow-wrap", "hyphens", "tab-size", "word-spacing",
+    "z-index"
   ]);
 
   const UNSUPPORTED_SURFACES = Object.freeze({
@@ -55,8 +56,20 @@
   const INTERACTIVE_CAPABILITIES = Object.freeze([
     "view.receive",
     "presence.publish",
-    "chat.send"
+    "chat.send",
+    "ink.publish",
+    "avatar.publish"
   ]);
+
+  // A fixed palette keeps arbitrary CSS off the wire. Indices travel, not
+  // colours. See SPEC-0015.
+  const INK_COLORS = Object.freeze([
+    "#f43f5e", "#f59e0b", "#22c55e", "#38bdf8", "#a855f7", "#f8fafc"
+  ]);
+  const INK_MODES = Object.freeze(["laser", "pinned"]);
+  const MAX_INK_POINTS_PER_FRAME = 64;
+  const MAX_INK_STROKE_POINTS = 2000;
+  const MAX_INK_WIDTH = 12;
 
   const safeTagSet = new Set(SAFE_TAGS);
   const safeStyleSet = new Set(SAFE_STYLES);
@@ -64,13 +77,22 @@
   const interactiveCapabilitySet = new Set(INTERACTIVE_CAPABILITIES);
   const patchAttributeSet = new Set([
     "ariaLabel", "checked", "disabled", "inputType", "placeholder",
-    "selected", "selectedIndex", "title", "value", "backgroundImageUrl"
+    "selected", "selectedIndex", "title", "value", "backgroundImageUrl",
+    "scrollTop", "scrollLeft"
   ]);
   const PARTICIPANT_PATTERN = /^[A-Za-z0-9_-]{22}$/;
   const MAX_PATCH_OPERATIONS = 256;
-  const MAX_VISUAL_ASSETS = 24;
+  // Receiver ceiling. Must stay above the capture ceiling in content.js, with
+  // headroom, or a capture at the limit would be rejected on arrival.
+  const MAX_RENDER_NODES = 13000;
+  // Rasterized icons are PNGs, so unlike the render tree they do not compress
+  // further. These caps are therefore close to a direct wire cost.
+  const MAX_VISUAL_ASSETS = 192;
   const MAX_VISUAL_ASSET_DATA_LENGTH = 750000;
-  const MAX_VISUAL_ASSET_TOTAL_LENGTH = 2500000;
+  const MAX_VISUAL_ASSET_TOTAL_LENGTH = 4000000;
+  const MAX_STYLE_SHEETS = 64;
+  const MAX_STYLE_SHEET_LENGTH = 2000000;
+  const MAX_STYLE_TOTAL_LENGTH = 6000000;
   const MAX_REMOTE_FONTS = 16;
   const MAX_REMOTE_FONT_DATA_LENGTH = 300000;
 
@@ -99,6 +121,14 @@
 
   function unsupportedLabel(tagName) {
     return UNSUPPORTED_SURFACES[String(tagName || "").toLowerCase()] || null;
+  }
+
+  // The display label is prose and may be reworded. Fidelity scoring needs a
+  // stable machine-readable kind to count placeholders by category, so carry
+  // both. See SPEC-0014.
+  function unsupportedKind(tagName) {
+    const tag = String(tagName || "").toLowerCase();
+    return Object.prototype.hasOwnProperty.call(UNSUPPORTED_SURFACES, tag) ? tag : null;
   }
 
   function shouldOmitTag(tagName) {
@@ -151,6 +181,34 @@
     return result;
   }
 
+  // Stylesheet text is carried for layout only. The receiver renders it as CSS
+  // inside an isolated frame; it is never executed and never becomes script.
+  // Anything that could escape that boundary is rejected here rather than
+  // sanitized, because a partially sanitized stylesheet is harder to reason
+  // about than a rejected one. See ADR-0005.
+  function validateStyleSheets(sheets) {
+    if (sheets === undefined) return true;
+    if (!Array.isArray(sheets) || sheets.length > MAX_STYLE_SHEETS) return false;
+    let totalLength = 0;
+    for (const sheet of sheets) {
+      if (!sheet || typeof sheet !== "object" || Array.isArray(sheet)) return false;
+      if (sheet.unreadable !== undefined) {
+        if (sheet.unreadable !== true) return false;
+        if (sheet.href !== null && normalizeRemoteAssetUrl(sheet.href) !== sheet.href) return false;
+        continue;
+      }
+      if (typeof sheet.cssText !== "string" || !sheet.cssText.length) return false;
+      if (sheet.cssText.length > MAX_STYLE_SHEET_LENGTH) return false;
+      // `@import` would make the receiver fetch further sheets we never
+      // inspected; javascript: and expression() are historic script vectors.
+      if (/@import|javascript\s*:|expression\s*\(/iu.test(sheet.cssText)) return false;
+      if (sheet.media !== undefined && (typeof sheet.media !== "string" || sheet.media.length > 200)) return false;
+      totalLength += sheet.cssText.length;
+      if (totalLength > MAX_STYLE_TOTAL_LENGTH) return false;
+    }
+    return true;
+  }
+
   function validateVisualAssets(assets) {
     if (assets === undefined) return true;
     if (!assets || typeof assets !== "object" || Array.isArray(assets)) return false;
@@ -172,6 +230,11 @@
       if (totalLength > MAX_VISUAL_ASSET_TOTAL_LENGTH) return false;
     }
     return true;
+  }
+
+  function visualAssetMimeFromDataUrl(dataUrl) {
+    if (typeof dataUrl !== "string") return null;
+    return /^data:(image\/(?:png|webp));base64,/u.exec(dataUrl)?.[1] || null;
   }
 
   function validateRemoteFonts(fonts) {
@@ -200,8 +263,9 @@
   function validateRenderNode(node, counters = { count: 0, depth: 0 }) {
     if (!node || typeof node !== "object" || Array.isArray(node)) return false;
     counters.count += 1;
-    if (counters.count > 2600 || counters.depth > 50) return false;
+    if (counters.count > MAX_RENDER_NODES || counters.depth > 50) return false;
 
+    if (node.i !== undefined && (!Number.isInteger(node.i) || node.i < 1 || node.i > 5_000_000)) return false;
     if (node.type === "text") {
       return typeof node.text === "string" && node.text.length <= 20000;
     }
@@ -209,6 +273,7 @@
       return Boolean(
         typeof node.label === "string" &&
         node.label.length <= 200 &&
+        (node.kind === undefined || unsupportedKind(node.kind) === node.kind) &&
         (node.assetId === undefined || PARTICIPANT_PATTERN.test(node.assetId)) &&
         (node.remoteUrl === undefined || normalizeRemoteAssetUrl(node.remoteUrl) === node.remoteUrl)
       );
@@ -261,6 +326,7 @@
       }
     }
     if (!validateVisualAssets(snapshot.assets)) return false;
+    if (!validateStyleSheets(snapshot.styleSheets)) return false;
     if (!validateRemoteFonts(snapshot.fonts)) return false;
     if (!validateRenderNode(snapshot.root)) return false;
     let validReferences = true;
@@ -657,6 +723,58 @@
     };
   }
 
+  // Anchor validation is deliberately borrowed rather than copied. anchor.js
+  // loads after this module, so resolve it at call time and fail closed when it
+  // is absent: an unvalidated point must never reach a renderer.
+  function validateInkPoint(point) {
+    const Anchor = globalThis.AmbientSharedViewAnchor;
+    return Boolean(Anchor?.validatePoint(point));
+  }
+
+  function validateInk(ink) {
+    if (!ink || ink.type !== "shared-view-ink" || ink.version !== 1) return false;
+    if (!validateInteractiveIdentity(ink) || !Number.isFinite(ink.capturedAt)) return false;
+    if (ink.sender !== "host" && ink.sender !== "guest") return false;
+    if (!validBoundedString(ink.strokeId, 64)) return false;
+    if (!INK_MODES.includes(ink.mode)) return false;
+    if (!Number.isInteger(ink.color) || ink.color < 0 || ink.color >= INK_COLORS.length) return false;
+    if (!Number.isFinite(ink.width) || ink.width <= 0 || ink.width > MAX_INK_WIDTH) return false;
+    if (typeof ink.done !== "boolean") return false;
+    if (!Array.isArray(ink.points) || ink.points.length > MAX_INK_POINTS_PER_FRAME) return false;
+    // A frame with no points is only meaningful as the end of a stroke.
+    if (!ink.points.length && !ink.done) return false;
+    return ink.points.every(validateInkPoint);
+  }
+
+  function validateAvatar(avatar) {
+    if (!avatar || avatar.type !== "shared-view-avatar" || avatar.version !== 1) return false;
+    if (!validateInteractiveIdentity(avatar) || !Number.isFinite(avatar.capturedAt)) return false;
+    if (avatar.sender !== "host" && avatar.sender !== "guest") return false;
+    if (!validateInkPoint(avatar.at)) return false;
+    if (![avatar.x, avatar.y, avatar.vx, avatar.vy].every((value) => Number.isFinite(value) && Math.abs(value) <= 1_000_000)) return false;
+    if (avatar.viewport !== undefined && !(
+      avatar.viewport &&
+      Number.isFinite(avatar.viewport.width) && avatar.viewport.width > 0 && avatar.viewport.width <= 100_000 &&
+      Number.isFinite(avatar.viewport.height) && avatar.viewport.height > 0 && avatar.viewport.height <= 100_000
+    )) return false;
+    if (avatar.facing !== -1 && avatar.facing !== 1) return false;
+    if (!avatar.input || !Number.isFinite(avatar.input.direction) || avatar.input.direction < -1 || avatar.input.direction > 1) return false;
+    if (typeof avatar.input.jump !== "boolean" || typeof avatar.input.drop !== "boolean") return false;
+    return ["grounded", "airborne", "wallslide"].includes(avatar.state);
+  }
+
+  // Staged asset delivery. A referenced image is far cheaper than an inlined
+  // one, but it fails on session-gated or unreachable resources. The guest
+  // reports which node identities failed and the host inlines only those, so
+  // the cheap path stays the default and the expensive path is targeted.
+  // See SPEC-0019.
+  function validateAssetRequest(request) {
+    if (!request || request.type !== "shared-view-asset-request" || request.version !== 1) return false;
+    if (!validateInteractiveIdentity(request) || !Number.isFinite(request.requestedAt)) return false;
+    if (!Array.isArray(request.nodeIds) || !request.nodeIds.length || request.nodeIds.length > 64) return false;
+    return request.nodeIds.every((id) => Number.isInteger(id) && id >= 1 && id <= 5_000_000);
+  }
+
   function validateChat(chat) {
     if (!chat || chat.type !== "shared-view-chat" || chat.version !== 1) return false;
     if (!validateInteractiveIdentity(chat) || !Number.isFinite(chat.sentAt)) return false;
@@ -668,6 +786,11 @@
     SAFE_TAGS,
     SAFE_STYLES,
     INTERACTIVE_CAPABILITIES,
+    MAX_RENDER_NODES,
+    INK_COLORS,
+    INK_MODES,
+    MAX_INK_POINTS_PER_FRAME,
+    MAX_INK_STROKE_POINTS,
     UNSUPPORTED_SURFACES,
     OMITTED_TAGS,
     capabilityGrantAllows,
@@ -684,17 +807,24 @@
     patchHasRenderableChanges,
     sanitizeStyleMap,
     shouldOmitTag,
+    unsupportedKind,
     unsupportedLabel,
+    validatePatchPath,
     validatePresence,
     validateCapabilities,
     validateCapabilityGrant,
     validateChat,
+    validateInk,
+    validateAvatar,
+    validateAssetRequest,
     validateGuestPresence,
     validateEncodedGuestPresence,
     validateEncodedHostPresence,
     validateRenderNode,
     validateRemoteFonts,
     validateVisualAssets,
+    visualAssetMimeFromDataUrl,
+    validateStyleSheets,
     validateSnapshotPatch,
     validateSnapshot
   });

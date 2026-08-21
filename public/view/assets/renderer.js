@@ -46,7 +46,20 @@
       }
     }
 
+    // Scroll offsets cannot be applied before the node is in the document, so
+    // they are collected during the build and applied after mounting.
+    let pendingScroll = [];
+    const nodeById = new Map();
+    const failedAssetNodeIds = new Set();
+    let onAssetFailure = () => {};
+
     function buildNode(node, assets = {}) {
+      const built = buildNodeInner(node, assets);
+      if (Number.isInteger(node?.i) && built) nodeById.set(node.i, built);
+      return built;
+    }
+
+    function buildNodeInner(node, assets = {}) {
       if (node.type === "text") return receiverDocument.createTextNode(node.text);
       if (node.type === "placeholder") {
         const asset = node.assetId ? assets[node.assetId] : null;
@@ -63,7 +76,17 @@
           image.style.width = `${Math.max(1, Number(node.width) || asset?.width || 1)}px`;
           image.style.height = `${Math.max(1, Number(node.height) || asset?.height || 1)}px`;
           image.style.objectFit = "contain";
-          if (!asset) image.addEventListener("error", () => image.classList.add("shared-view-visual-asset-failed"), { once: true });
+          if (!asset) {
+            image.addEventListener("error", () => {
+              image.classList.add("shared-view-visual-asset-failed");
+              // A referenced image the guest cannot fetch: session-gated,
+              // blocked, or gone. Report it so the host can send the bytes.
+              if (Number.isInteger(node.i)) {
+                failedAssetNodeIds.add(node.i);
+                onAssetFailure(node.i);
+              }
+            }, { once: true });
+          }
           return image;
         }
         const placeholder = receiverDocument.createElement("div");
@@ -95,6 +118,9 @@
         element.disabled = true;
       } else if (element instanceof HTMLButtonElement) {
         element.disabled = true;
+      }
+      if (Number.isFinite(attributes.scrollTop) || Number.isFinite(attributes.scrollLeft)) {
+        pendingScroll.push([element, Number(attributes.scrollTop) || 0, Number(attributes.scrollLeft) || 0]);
       }
       for (const child of node.children || []) element.appendChild(buildNode(child, assets));
       if (element instanceof HTMLSelectElement && Number.isInteger(attributes.selectedIndex)) {
@@ -256,9 +282,16 @@
       }
       currentSnapshot = snapshot;
       loadRemoteFonts(snapshot.fonts || []);
+      pendingScroll = [];
+      nodeById.clear();
       const renderedRoot = buildNode(snapshot.root, snapshot.assets || {});
       renderedRoot.style.minHeight = `${Math.max(snapshot.viewport.height, snapshot.viewport.documentHeight || 0)}px`;
       viewportSurface.replaceChildren(renderedRoot);
+      for (const [element, top, left] of pendingScroll) {
+        if (top) element.scrollTop = top;
+        if (left) element.scrollLeft = left;
+      }
+      pendingScroll = [];
       viewportSurface.style.width = `${snapshot.viewport.width}px`;
       viewportSurface.style.minHeight = `${snapshot.viewport.documentHeight}px`;
       const snapshotPresence = {
@@ -338,7 +371,14 @@
       showStatus,
       stopButton,
       viewportFrame,
-      updateScale
+      updateScale,
+      failedAssetNodeIds,
+      onAssetFailure(handler) {
+        onAssetFailure = typeof handler === "function" ? handler : () => {};
+      },
+      // Node identity for anchoring. Rebuilt on every render from the ids the
+      // snapshot carries, so it cannot drift from what the host sent.
+      nodeById
     });
   }
 

@@ -255,6 +255,7 @@
     sourceEpoch,
     verificationRequired = true,
     chatEnabledByDefault = false,
+    avatarEnabledByDefault = false,
     hostDisplayName = "Owen",
     WebSocketImpl = globalThis.WebSocket,
     onEvent = () => {},
@@ -277,11 +278,17 @@
     let reconnectAttempt = 0;
     let hasRegisteredHost = false;
     let hasConnectedHost = false;
+    let pendingMediaAccess = null;
+    let mediaAvailable = false;
     const pendingParticipants = new Map();
     const participants = new Map();
     let announcedPendingId = null;
     let activeParticipantId = null;
-    const capabilities = new Set(["view.receive", ...(chatEnabledByDefault ? ["chat.send"] : [])]);
+    const capabilities = new Set([
+      "view.receive",
+      ...(chatEnabledByDefault ? ["chat.send"] : []),
+      ...(avatarEnabledByDefault ? ["avatar.publish"] : [])
+    ]);
 
     function readyParticipants() {
       return [...participants.values()].filter((participant) => participant.state === "ready" && participant.currentGrant);
@@ -317,6 +324,7 @@
           capabilities: participant.currentGrant ? [...participant.currentGrant.capabilities] : []
         })),
         verificationRequired: invitation.verificationRequired,
+        mediaAvailable,
         usage: socketState.usage(),
         capabilities: ready.length ? [...capabilities] : []
       });
@@ -490,7 +498,7 @@
       const participant = participants.get(message.participantId);
       if (!participant?.secrets) return;
       const { kind, sequence } = message.envelope || {};
-      if (!["guest-confirm", "guest-presence", "guest-chat"].includes(kind)) return;
+      if (!["guest-confirm", "guest-presence", "guest-chat", "guest-ink", "guest-avatar"].includes(kind)) return;
       if (!acceptInboundSequence(participant, kind, sequence)) {
         socketState.emit({ type: "denied", participantId: participant.participantId, code: "replay", kind });
         return;
@@ -518,6 +526,22 @@
         socketState.emit({ type: "guest-presence", participantId: participant.participantId, presence, displayName: participant.displayName });
         return;
       }
+      if (kind === "guest-ink") {
+        if (!currentGrantAllows(participant, "ink.publish", payload)) {
+          socketState.emit({ type: "denied", participantId: participant.participantId, code: "capability-denied", kind });
+          return;
+        }
+        socketState.emit({ type: "ink", participantId: participant.participantId, frame: payload, displayName: participant.displayName });
+        return;
+      }
+      if (kind === "guest-avatar") {
+        if (!Contract.validateAvatar(payload) || !currentGrantAllows(participant, "avatar.publish", payload)) {
+          socketState.emit({ type: "denied", participantId: participant.participantId, code: "capability-denied", kind });
+          return;
+        }
+        socketState.emit({ type: "avatar", participantId: participant.participantId, frame: payload, displayName: participant.displayName });
+        return;
+      }
       if (!currentGrantAllows(participant, "chat.send", payload)) {
         socketState.emit({ type: "denied", participantId: participant.participantId, code: "capability-denied", kind });
         return;
@@ -535,6 +559,7 @@
       }
       if (message.type === "interactive-status" && message.roomId === invitation.roomId) {
         const resumed = socketState.state === "reconnecting" || message.resumed === true;
+        mediaAvailable = message.mediaAvailable === true;
         reconcileRelayParticipants(message);
         hasConnectedHost = true;
         reconnectAttempt = 0;
@@ -572,6 +597,19 @@
         announceNextPending();
         return;
       }
+      if (message.type === "media-token" && message.roomId === invitation.roomId && message.role === "host") {
+        const access = Object.freeze({
+          url: message.url,
+          token: message.token,
+          expiresAt: message.expiresAt,
+          roomId: invitation.roomId,
+          role: "host"
+        });
+        pendingMediaAccess?.resolve(access);
+        pendingMediaAccess = null;
+        socketState.emit({ type: "media-access", access });
+        return;
+      }
       if (message.type === "interactive-envelope") {
         await handleInteractiveEnvelope(message);
         return;
@@ -585,6 +623,10 @@
       }
       if (message.type === "room-error") {
         const error = new Error(`Interactive relay error: ${message.code || "unknown"}`);
+        if (pendingMediaAccess && String(message.code || "").startsWith("media-")) {
+          pendingMediaAccess.reject(error);
+          pendingMediaAccess = null;
+        }
         socketState.emit({ type: "error", code: message.code || "relay-error", error });
         if (hasConnectedHost && ["room-not-found", "host-auth-failed", "invalid-resume-token"].includes(message.code)) {
           clearTimeout(reconnectTimer);
@@ -658,6 +700,8 @@
         hostConfirmationSequence: 0,
         grantSequence: 0,
         hostChatSequence: 0,
+        hostInkSequence: 0,
+        hostAvatarSequence: 0,
         sendQueue: Promise.resolve(),
         lastInboundSequence: new Map()
       };
@@ -702,7 +746,7 @@
       if (!participant?.secrets || participant.state !== "pairing") throw new Error("No participant is waiting for pairing confirmation.");
       const confirmation = {
         type: "shared-view-pairing-confirmation",
-        version: 1,
+        version: Session.INTERACTIVE_VERSION,
         sessionId,
         participantId: participant.participantId,
         sequence: ++participant.hostConfirmationSequence,
@@ -770,6 +814,65 @@
       return chats;
     }
 
+    async function publishInk(frame) {
+      const recipients = readyParticipants().filter((participant) => currentGrantAllows(participant, "ink.publish"));
+      if (!recipients.length) throw new Error("Ink is not granted.");
+      const frames = await Promise.all(recipients.map(async (participant) => {
+        const identified = {
+          ...frame,
+          type: "shared-view-ink",
+          version: 1,
+          sessionId,
+          participantId: participant.participantId,
+          sequence: ++participant.hostInkSequence,
+          sourceEpoch,
+          grantId: participant.currentGrant.grantId,
+          sender: "host"
+        };
+        if (!Contract.validateInk(identified)) throw new Error("The host ink frame is invalid.");
+        await sendEncrypted(participant, "host-ink", identified);
+        return identified;
+      }));
+      return frames;
+    }
+
+    async function publishAvatar(frame) {
+      const recipients = readyParticipants().filter((participant) => currentGrantAllows(participant, "avatar.publish"));
+      if (!recipients.length) throw new Error("Avatar presence is not granted.");
+      return Promise.all(recipients.map(async (participant) => {
+        const identified = {
+          ...frame,
+          type: "shared-view-avatar",
+          version: 1,
+          sessionId,
+          participantId: participant.participantId,
+          sequence: ++participant.hostAvatarSequence,
+          sourceEpoch,
+          grantId: participant.currentGrant.grantId,
+          sender: "host"
+        };
+        if (!Contract.validateAvatar(identified)) throw new Error("The host avatar frame is invalid.");
+        await sendEncrypted(participant, "host-avatar", identified);
+        return identified;
+      }));
+    }
+
+    function requestMediaAccess() {
+      if (pendingMediaAccess) return pendingMediaAccess.promise;
+      let timeout = null;
+      const promise = new Promise((resolve, reject) => {
+        pendingMediaAccess = { promise: null, resolve, reject };
+        timeout = setTimeout(() => {
+          if (pendingMediaAccess?.promise !== promise) return;
+          pendingMediaAccess = null;
+          reject(new Error("The full-pixel media token request timed out."));
+        }, 5000);
+        sendRoomMessage("media-token-request");
+      }).finally(() => clearTimeout(timeout));
+      pendingMediaAccess.promise = promise;
+      return promise;
+    }
+
     async function removeGuest(reason = "host-removed", participantId = activeParticipantId) {
       const participant = participants.get(participantId) || readyParticipants().at(-1);
       if (!participant) return false;
@@ -806,8 +909,11 @@
       publish,
       publishPatch,
       publishPresence,
+      publishInk,
+      publishAvatar,
       removeGuest,
       roomId: invitation.roomId,
+      requestMediaAccess,
       sendChat,
       setCapability,
       status,
@@ -836,10 +942,14 @@
     let guestConfirmationSequence = 0;
     let guestPresenceSequence = 0;
     let guestChatSequence = 0;
+    let guestInkSequence = 0;
+    let guestAvatarSequence = 0;
     let encryptedSendQueue = Promise.resolve();
     let hostConfirmed = false;
     let pairingSessionId = null;
     let pairingSourceEpoch = null;
+    let pendingMediaAccess = null;
+    let mediaAvailable = false;
     const lastInboundSequence = new Map();
 
     function status() {
@@ -848,6 +958,7 @@
         roomId: invitation.roomId,
         participantId,
         verificationRequired: invitation.verificationRequired,
+        mediaAvailable,
         usage: socketState.usage(),
         capabilities: currentGrant ? [...currentGrant.capabilities] : []
       });
@@ -897,7 +1008,7 @@
     async function handleEnvelope(message) {
       if (!secrets || message.participantId !== participantId) return;
       const { kind, sequence } = message.envelope || {};
-      if (!["host-confirm", "grant", "snapshot", "patch", "host-presence", "host-chat", "remove"].includes(kind)) return;
+      if (!["host-confirm", "grant", "snapshot", "patch", "host-presence", "host-chat", "host-ink", "host-avatar", "remove"].includes(kind)) return;
       if (!acceptInboundSequence(kind, sequence)) {
         socketState.emit({ type: "denied", code: "replay", kind });
         return;
@@ -949,6 +1060,16 @@
         socketState.emit({ type: "chat", chat: payload, displayName: currentGrant.hostDisplayName || "Owen" });
         return;
       }
+      if (kind === "host-ink") {
+        if (!grantAllows("ink.publish") || !payloadMatchesGrant(payload)) return;
+        socketState.emit({ type: "ink", frame: payload, displayName: currentGrant.hostDisplayName || "Owen" });
+        return;
+      }
+      if (kind === "host-avatar") {
+        if (!grantAllows("avatar.publish") || !payloadMatchesGrant(payload) || !Contract.validateAvatar(payload)) return;
+        socketState.emit({ type: "avatar", frame: payload, displayName: currentGrant.hostDisplayName || "Owen" });
+        return;
+      }
       socketState.setState("removed", { reason: payload.reason || "host-removed" });
       socketState.emit({ type: "removed", reason: payload.reason || "host-removed" });
     }
@@ -995,6 +1116,7 @@
         return;
       }
       if (message.type === "interactive-status" && message.roomId === invitation.roomId) {
+        mediaAvailable = message.mediaAvailable === true;
         if (message.hostConnected === false) {
           socketState.setState("paused", { participantId });
           socketState.emit({ type: "host-paused" });
@@ -1006,6 +1128,24 @@
       }
       if (message.type === "interactive-envelope") {
         await handleEnvelope(message);
+        return;
+      }
+      if (
+        message.type === "media-token" &&
+        message.roomId === invitation.roomId &&
+        message.participantId === participantId &&
+        message.role === "guest"
+      ) {
+        const access = Object.freeze({
+          url: message.url,
+          token: message.token,
+          expiresAt: message.expiresAt,
+          roomId: invitation.roomId,
+          role: "guest"
+        });
+        pendingMediaAccess?.resolve(access);
+        pendingMediaAccess = null;
+        socketState.emit({ type: "media-access", access });
         return;
       }
       if (message.type === "interactive-removed") {
@@ -1022,6 +1162,10 @@
       }
       if (message.type === "room-error") {
         const error = new Error(`Interactive relay error: ${message.code || "unknown"}`);
+        if (pendingMediaAccess && String(message.code || "").startsWith("media-")) {
+          pendingMediaAccess.reject(error);
+          pendingMediaAccess = null;
+        }
         socketState.emit({ type: "error", code: message.code || "relay-error", error });
         rejectConnect?.(error);
       }
@@ -1059,7 +1203,7 @@
       if (!secrets || socketState.state !== "pairing") throw new Error("The interactive guest is not waiting for pairing confirmation.");
       const confirmation = {
         type: "shared-view-pairing-confirmation",
-        version: 1,
+        version: Session.INTERACTIVE_VERSION,
         sessionId: pairingSessionId,
         participantId,
         sequence: ++guestConfirmationSequence,
@@ -1108,6 +1252,61 @@
       return chat;
     }
 
+    async function publishInk(frame) {
+      if (!grantAllows("ink.publish")) throw new Error("Guest ink is not granted.");
+      const identified = {
+        ...frame,
+        type: "shared-view-ink",
+        version: 1,
+        sessionId: currentGrant.sessionId,
+        participantId,
+        sequence: ++guestInkSequence,
+        sourceEpoch: currentGrant.sourceEpoch,
+        grantId: currentGrant.grantId,
+        sender: "guest"
+      };
+      if (!Contract.validateInk(identified)) throw new Error("The guest ink frame is invalid.");
+      await sendEncrypted("guest-ink", identified);
+      return identified;
+    }
+
+    async function publishAvatar(frame) {
+      if (!grantAllows("avatar.publish")) throw new Error("Guest avatar presence is not granted.");
+      const identified = {
+        ...frame,
+        type: "shared-view-avatar",
+        version: 1,
+        sessionId: currentGrant.sessionId,
+        participantId,
+        sequence: ++guestAvatarSequence,
+        sourceEpoch: currentGrant.sourceEpoch,
+        grantId: currentGrant.grantId,
+        sender: "guest"
+      };
+      if (!Contract.validateAvatar(identified)) throw new Error("The guest avatar frame is invalid.");
+      await sendEncrypted("guest-avatar", identified);
+      return identified;
+    }
+
+    function requestMediaAccess() {
+      if (!currentGrant || !grantAllows("view.receive")) {
+        return Promise.reject(new Error("The viewer must be admitted before requesting Full Pixels."));
+      }
+      if (pendingMediaAccess) return pendingMediaAccess.promise;
+      let timeout = null;
+      const promise = new Promise((resolve, reject) => {
+        pendingMediaAccess = { promise: null, resolve, reject };
+        timeout = setTimeout(() => {
+          if (pendingMediaAccess?.promise !== promise) return;
+          pendingMediaAccess = null;
+          reject(new Error("The full-pixel media token request timed out."));
+        }, 5000);
+        sendRoomMessage("media-token-request");
+      }).finally(() => clearTimeout(timeout));
+      pendingMediaAccess.promise = promise;
+      return promise;
+    }
+
     function leave() {
       if (!["ended", "removed"].includes(socketState.state)) socketState.setState("ended", { reason: "guest-left" });
       socketState.close();
@@ -1118,7 +1317,10 @@
       connect,
       leave,
       participantId,
+      publishAvatar,
+      publishInk,
       publishPresence,
+      requestMediaAccess,
       sendChat,
       status,
       usage: socketState.usage

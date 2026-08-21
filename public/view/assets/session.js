@@ -7,7 +7,7 @@
   const PRESENCE_ENVELOPE_TYPE = "shared-view-encrypted-presence";
   const INTERACTIVE_ENVELOPE_TYPE = "shared-view-interactive-envelope";
   const ENVELOPE_VERSION = 0;
-  const INTERACTIVE_VERSION = 1;
+  const INTERACTIVE_VERSION = 2;
   const ROOM_PATTERN = /^[A-Za-z0-9_-]{22}$/;
   const KEY_PATTERN = /^[A-Za-z0-9_-]{43}$/;
   const BASE64URL_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -23,8 +23,14 @@
     "guest-presence",
     "host-chat",
     "guest-chat",
+    "host-ink",
+    "guest-ink",
+    "host-avatar",
+    "guest-avatar",
+    "guest-asset-request",
     "remove"
   ]);
+  const compressedInteractiveKinds = new Set(["snapshot", "patch"]);
 
   function bytesToBase64Url(value) {
     const bytes = value instanceof Uint8Array ? value : new Uint8Array(value);
@@ -240,6 +246,7 @@
       validateRoomId(envelope.roomId) &&
       ROOM_PATTERN.test(String(envelope.participantId || "")) &&
       interactiveKinds.has(envelope.kind) &&
+      ["json", "gzip-json"].includes(envelope.encoding) &&
       Number.isInteger(envelope.sequence) &&
       envelope.sequence >= 1 &&
       typeof envelope.iv === "string" &&
@@ -282,6 +289,39 @@
     );
   }
 
+  // Snapshot payloads repeat about a hundred Cascading Style Sheets property
+  // names per node, so they compress by more than an order of magnitude.
+  // Compression happens before encryption, which is the only order that works:
+  // ciphertext does not compress. Both sides always compress, so there is no
+  // encoding field to negotiate and no downgrade to get wrong.
+  //
+  // This leaks compressed length to the relay. Plaintext length was already
+  // observable, so this narrows rather than widens what a length reveals, and
+  // the relay still never holds a key.
+  async function compressBytes(bytes) {
+    if (typeof CompressionStream !== "function") {
+      throw new Error("This browser cannot compress Shared View payloads.");
+    }
+    const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  async function decompressBytes(bytes) {
+    if (typeof DecompressionStream !== "function") {
+      throw new Error("This browser cannot decompress Shared View payloads.");
+    }
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+
+  async function encodePayload(payload) {
+    return compressBytes(new TextEncoder().encode(JSON.stringify(payload)));
+  }
+
+  async function decodePayload(plaintext) {
+    return JSON.parse(new TextDecoder().decode(await decompressBytes(new Uint8Array(plaintext))));
+  }
+
   function validateInteractivePayload(kind, payload) {
     if (kind === "host-confirm") return validatePairingConfirmation(payload, "host");
     if (kind === "guest-confirm") return validatePairingConfirmation(payload, "guest");
@@ -292,6 +332,11 @@
     if (kind === "guest-presence") return Boolean(Contract?.validateEncodedGuestPresence(payload));
     if (kind === "host-chat") return Boolean(Contract?.validateChat(payload) && payload.sender === "host");
     if (kind === "guest-chat") return Boolean(Contract?.validateChat(payload) && payload.sender === "guest");
+    if (kind === "host-ink") return Boolean(Contract?.validateInk(payload) && payload.sender === "host");
+    if (kind === "guest-ink") return Boolean(Contract?.validateInk(payload) && payload.sender === "guest");
+    if (kind === "host-avatar") return Boolean(Contract?.validateAvatar(payload) && payload.sender === "host");
+    if (kind === "guest-avatar") return Boolean(Contract?.validateAvatar(payload) && payload.sender === "guest");
+    if (kind === "guest-asset-request") return Boolean(Contract?.validateAssetRequest(payload));
     if (kind === "remove") return validateRemove(payload);
     return false;
   }
@@ -307,7 +352,8 @@
       envelope.roomId,
       envelope.participantId,
       envelope.kind,
-      envelope.sequence
+      envelope.sequence,
+      envelope.encoding
     ].join(":"));
   }
 
@@ -318,6 +364,19 @@
     if (!validateInteractivePayload(kind, payload) || payload.participantId && payload.participantId !== participantId) {
       throw new Error("Cannot encrypt invalid interactive Shared View data.");
     }
+    const encoded = new TextEncoder().encode(JSON.stringify(payload));
+    let encoding = "json";
+    let plaintext = encoded;
+    if (compressedInteractiveKinds.has(kind)) {
+      try {
+        plaintext = await compressBytes(encoded);
+        encoding = "gzip-json";
+      } catch (_error) {
+        // Safari exposes CompressionStream in extension content worlds where
+        // the actual stream operation can still fail. V2 authenticates the
+        // selected encoding, so falling back to encrypted JSON is explicit.
+      }
+    }
     const ivBytes = crypto.getRandomValues(new Uint8Array(12));
     const envelope = {
       type: INTERACTIVE_ENVELOPE_TYPE,
@@ -326,13 +385,14 @@
       participantId,
       kind,
       sequence: interactivePayloadSequence(payload),
+      encoding,
       iv: bytesToBase64Url(ivBytes),
       ciphertext: ""
     };
     const ciphertext = await crypto.subtle.encrypt(
       { name: "AES-GCM", iv: ivBytes, additionalData: interactiveAdditionalData(envelope) },
       key,
-      new TextEncoder().encode(JSON.stringify(payload))
+      plaintext
     );
     envelope.ciphertext = bytesToBase64Url(ciphertext);
     if (envelope.ciphertext.length > MAX_CIPHERTEXT_CHARACTERS) {
@@ -350,16 +410,34 @@
     ) {
       throw new Error("The interactive Shared View envelope is invalid.");
     }
-    const plaintext = await crypto.subtle.decrypt(
-      {
-        name: "AES-GCM",
-        iv: base64UrlToBytes(envelope.iv),
-        additionalData: interactiveAdditionalData(envelope)
-      },
-      key,
-      base64UrlToBytes(envelope.ciphertext)
-    );
-    const payload = JSON.parse(new TextDecoder().decode(plaintext));
+    let plaintext;
+    try {
+      plaintext = await crypto.subtle.decrypt(
+        {
+          name: "AES-GCM",
+          iv: base64UrlToBytes(envelope.iv),
+          additionalData: interactiveAdditionalData(envelope)
+        },
+        key,
+        base64UrlToBytes(envelope.ciphertext)
+      );
+    } catch (_error) {
+      throw new Error("Interactive message authentication failed.");
+    }
+    let decodedBytes;
+    try {
+      decodedBytes = envelope.encoding === "gzip-json"
+        ? await decompressBytes(new Uint8Array(plaintext))
+        : new Uint8Array(plaintext);
+    } catch (_error) {
+      throw new Error("Interactive message decompression failed.");
+    }
+    let payload;
+    try {
+      payload = JSON.parse(new TextDecoder().decode(decodedBytes));
+    } catch (_error) {
+      throw new Error("Interactive message JSON decoding failed.");
+    }
     if (!validateInteractivePayload(expectedKind, payload) || interactivePayloadSequence(payload) !== envelope.sequence) {
       throw new Error("The decrypted interactive Shared View data is invalid.");
     }
@@ -381,7 +459,7 @@
       iv: bytesToBase64Url(ivBytes),
       ciphertext: ""
     };
-    const plaintext = new TextEncoder().encode(JSON.stringify(payload));
+    const plaintext = await encodePayload(payload);
     const ciphertext = await crypto.subtle.encrypt(
       { name: "AES-GCM", iv: ivBytes, additionalData: envelopeAdditionalData(envelope) },
       key,
@@ -404,7 +482,7 @@
       key,
       base64UrlToBytes(envelope.ciphertext)
     );
-    const payload = JSON.parse(new TextDecoder().decode(plaintext));
+    const payload = await decodePayload(plaintext);
     if (!validatePayload(payload) || payload.sequence !== envelope.sequence) {
       throw new Error("The decrypted Shared View data is invalid.");
     }
